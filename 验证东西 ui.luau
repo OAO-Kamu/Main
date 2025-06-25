@@ -48,7 +48,7 @@ function RoTest:Agreement(Propeties)
 	ImageLabel_2.BorderSizePixel = 0
 	ImageLabel_2.Position = UDim2.new(1, -10, 0, 10)
 	ImageLabel_2.Size = UDim2.new(0, 48, 0, 48)
-	ImageLabel_2.Image = "rbxassetid://81547176107809"
+	ImageLabel_2.Image = "rbxassetid://16750449550"
 
 	TextLabel.Parent = Frame
 	TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
