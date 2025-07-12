@@ -37,7 +37,7 @@ function RoTest:Agreement(Propeties)
 	ImageLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
 	ImageLabel.BorderSizePixel = 0
 	ImageLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
-	ImageLabel.Image = "rbxassetid://11150693205"
+	ImageLabel.Image = "rbxassetid://135664883434196"
 	ImageLabel.ImageColor3 = Color3.fromRGB(134, 255, 78)
 
 	ImageLabel_2.Parent = Frame
@@ -48,7 +48,7 @@ function RoTest:Agreement(Propeties)
 	ImageLabel_2.BorderSizePixel = 0
 	ImageLabel_2.Position = UDim2.new(1, -10, 0, 10)
 	ImageLabel_2.Size = UDim2.new(0, 48, 0, 48)
-	ImageLabel_2.Image = "rbxassetid://11150693205"
+	ImageLabel_2.Image = "rbxassetid://135664883434196"
 
 	TextLabel.Parent = Frame
 	TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -72,7 +72,7 @@ function RoTest:Agreement(Propeties)
 	expand.BorderSizePixel = 0
 	expand.Position = UDim2.new(0.5, 0, 1, -4)
 	expand.Size = UDim2.new(0, 16, 0, 16)
-	expand.Image = "rbxassetid://94177721628694"
+	expand.Image = "rbxassetid://78984098833846"
 	expand.ImageColor3 = Color3.fromRGB(144, 144, 144)
 
 	d.Name = "d"
