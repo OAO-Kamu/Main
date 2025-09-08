@@ -1,93 +1,192 @@
-local function Barrage()
+local Barrage = {}
+
+
+Barrage.DefaultConfig = {
+    BulletSpeed = 200,
+    FontSize = 24,  
+    TextContent = "CHANGED脚本牛逼!👍🏻", 
+    RainbowSpeed = 0.1, 
+    BulletInterval = 15,
+    TextStrokeTransparency = 0.5, 
+    TextStrokeColor = Color3.new(0, 0, 0), 
+    Font = Enum.Font.GothamBold, 
+    ScreenGuiName = "BulletChatScreenGui" 
+}
+
+Barrage.RainbowColors = {
+    Color3.new(1, 0, 0),    
+    Color3.new(1, 0.5, 0),  
+    Color3.new(1, 1, 0),    
+    Color3.new(0, 1, 0),    
+    Color3.new(0, 0.5, 1),   
+    Color3.new(0.3, 0, 0.5), 
+    Color3.new(0.5, 0, 1)    
+}
+
+-- 初始化
+function Barrage.Init(config)
+    local self = setmetatable({}, {__index = Barrage})
+    self.config = config or Barrage.DefaultConfig
+    self.running = false
+    self.bullets = {}
+    
     local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
-
-    if not RunService:IsClient() then return end
+    
+    if not RunService:IsClient() then 
+        warn("不在客户端")
+        return self
+    end
 
     local player = Players.LocalPlayer
     local playerGui = player:WaitForChild("PlayerGui")
-
-    local screenGui = playerGui:FindFirstChild("BulletChatScreenGui")
-    if not screenGui then
-        screenGui = Instance.new("ScreenGui")
-        screenGui.Name = "BulletChatScreenGui"
-        screenGui.Parent = playerGui
-        screenGui.ResetOnSpawn = false
+    
+    self.screenGui = playerGui:FindFirstChild(self.config.ScreenGuiName)
+    if not self.screenGui then
+        self.screenGui = Instance.new("ScreenGui")
+        self.screenGui.Name = self.config.ScreenGuiName
+        self.screenGui.Parent = playerGui
+        self.screenGui.ResetOnSpawn = false
     end
+    
+    return self
+end
 
-    local BULLET_SPEED = 200
-    local FONT_SIZE = 24
-    local TEXT_CONTENT = "CHANGED脚本牛逼!"
-    local RAINBOW_SPEED = 0.1
-
-    local RAINBOW_COLORS = {
-        Color3.new(1, 0, 0), 
-        Color3.new(1, 0.5, 0),  
-        Color3.new(1, 1, 0),   
-        Color3.new(0, 1, 0),    
-        Color3.new(0, 0.5, 1),  
-        Color3.new(0.3, 0, 0.5),
-        Color3.new(0.5, 0, 1)
+function Barrage:CreateBullet(text)
+    if not self.screenGui then return end
+    
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Name = "Bullet_" .. tick()
+    textLabel.Text = text or self.config.TextContent
+    textLabel.Font = self.config.Font
+    textLabel.TextSize = self.config.FontSize
+    textLabel.TextColor3 = self.RainbowColors[1]
+    textLabel.BackgroundTransparency = 1 
+    textLabel.Size = UDim2.new(0, 0, 0, 0)
+    textLabel.AutomaticSize = Enum.AutomaticSize.XY 
+    textLabel.TextStrokeTransparency = self.config.TextStrokeTransparency
+    textLabel.TextStrokeColor3 = self.config.TextStrokeColor
+    textLabel.Parent = self.screenGui
+    
+    RunService.RenderStepped:Wait()
+    
+    local screenWidth = self.screenGui.AbsoluteSize.X
+    
+    local startY = math.random(0, self.screenGui.AbsoluteSize.Y - textLabel.AbsoluteSize.Y)
+    local startX = self.screenGui.AbsoluteSize.X + 10 -- 屏幕右侧外10像素
+    textLabel.Position = UDim2.new(0, startX, 0, startY)
+    
+    local bulletData = {
+        Label = textLabel,
+        StartX = startX,
+        StartY = startY,
+        StartTime = tick(),
+        ColorIndex = 1,
+        ColorProgress = 0
     }
+    
+    table.insert(self.bullets, bulletData)
+    
+    return textLabel
+end
 
-    local function createBullet(text)
-        local textLabel = Instance.new("TextLabel")
-        textLabel.Name = "Bullet_" .. tick()
-        textLabel.Text = text
-        textLabel.Font = Enum.Font.GothamBold
-        textLabel.TextSize = FONT_SIZE
-        textLabel.TextColor3 = RAINBOW_COLORS[1] -- 初始颜色
-        textLabel.BackgroundTransparency = 1 -- 透明背景
-        textLabel.Size = UDim2.new(0, 0, 0, 0)
-        textLabel.AutomaticSize = Enum.AutomaticSize.XY -- 自动适应文本大小
-        textLabel.TextStrokeTransparency = 0.5 -- 文字描边
-        textLabel.TextStrokeColor3 = Color3.new(0, 0, 0) -- 黑色描边增强可读性
-        textLabel.Parent = screenGui
+function Barrage:UpdateBullets()
+    if not self.screenGui then return end
+    
+    local currentTime = tick()
+    local toRemove = {}
+    
+    for i, bulletData in ipairs(self.bullets) do
+        local textLabel = bulletData.Label
         
-        RunService.RenderStepped:Wait()
-    
-        local screenWidth = screenGui.AbsoluteSize.X
-    
-        local startY = math.random(0, screenGui.AbsoluteSize.Y - textLabel.AbsoluteSize.Y)
-        local startX = screenGui.AbsoluteSize.X + 10 -- 屏幕右侧外10像素
-        textLabel.Position = UDim2.new(0, startX, 0, startY)
-    
-        local colorIndex = 1
-        local colorProgress = 0
-    
-        coroutine.wrap(function()
-            local startTime = tick()
-                while textLabel and textLabel.Parent do
-                    local elapsed = tick() - startTime            
-                    local newX = startX - (BULLET_SPEED * elapsed)
-                    textLabel.Position = UDim2.new(0, newX, 0, startY)
-                
-                    if newX < -textLabel.AbsoluteSize.X then
-                            textLabel:Destroy()
-                        return
-                    end
-            
-                    colorProgress = colorProgress + RAINBOW_SPEED
-                    if colorProgress >= 1 then
-                        colorProgress = 0
-                        colorIndex = (colorIndex % #RAINBOW_COLORS) + 1
-                    end            
-                    local nextColorIndex = (colorIndex % #RAINBOW_COLORS) + 1
-                        textLabel.TextColor3 = RAINBOW_COLORS[colorIndex]:Lerp(
-                        RAINBOW_COLORS[nextColorIndex],
-                        colorProgress
-                    )
-            
-                    RunService.RenderStepped:Wait()
+        if textLabel and textLabel.Parent then
+            local elapsed = currentTime - bulletData.StartTime
+            local newX = bulletData.StartX - (self.config.BulletSpeed * elapsed)
+            textLabel.Position = UDim2.new(0, newX, 0, bulletData.StartY)
+            if newX < -textLabel.AbsoluteSize.X then
+                textLabel:Destroy()
+                table.insert(toRemove, i)
+            else
+                bulletData.ColorProgress = bulletData.ColorProgress + self.config.RainbowSpeed
+                if bulletData.ColorProgress >= 1 then
+                    bulletData.ColorProgress = 0
+                    bulletData.ColorIndex = (bulletData.ColorIndex % #self.RainbowColors) + 1
                 end
-        end)()
-    
-        return textLabel
+                
+                local nextColorIndex = (bulletData.ColorIndex % #self.RainbowColors) + 1
+                textLabel.TextColor3 = self.RainbowColors[bulletData.ColorIndex]:Lerp(
+                    self.RainbowColors[nextColorIndex],
+                    bulletData.ColorProgress
+                )
+            end
+        else
+            table.insert(toRemove, i)
+        end
     end
-
-    while true do
-        createBullet(TEXT_CONTENT)
-        wait(15)
+    
+    for i = #toRemove, 1, -1 do
+        table.remove(self.bullets, toRemove[i])
     end
 end
-return Barr
+--启用
+function Barrage:Start()
+    if self.running then return end
+    self.running = true
+    
+    self:CreateBullet()
+    
+    self.updateConnection = RunService.RenderStepped:Connect(function()
+        self:UpdateBullets()
+    end)
+    
+    self.bulletTimer = coroutine.wrap(function()
+        while self.running do
+            wait(self.config.BulletInterval)
+            if self.running then
+                self:CreateBullet()
+            end
+        end
+    end)()
+    
+    self.bulletTimer()
+end
+
+-- 停止
+function Barrage:Stop()
+    if not self.running then return end
+    self.running = false
+    if self.updateConnection then
+        self.updateConnection:Disconnect()
+        self.updateConnection = nil
+    end
+    
+    for _, bulletData in ipairs(self.bullets) do
+        if bulletData.Label and bulletData.Label.Parent then
+            bulletData.Label:Destroy()
+        end
+    end
+    self.bullets = {}
+end
+
+function Barrage:SetConfig(newConfig)
+    for key, value in pairs(newConfig) do
+        self.config[key] = value
+    end
+end
+
+function Barrage:AddCustomBullet(text, options)
+    local bulletConfig = {
+        BulletSpeed = options and options.speed or self.config.BulletSpeed,
+        FontSize = options and options.size or self.config.FontSize,
+        RainbowSpeed = options and options.rainbowSpeed or self.config.RainbowSpeed
+    }
+    
+    local originalConfig = self.config
+    self.config = bulletConfig
+    local bullet = self:CreateBullet(text)
+    self.config = originalConfig
+    
+    return bullet
+end
+
+return Barrage
