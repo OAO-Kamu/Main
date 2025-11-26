@@ -34,7 +34,7 @@ local Window = SugarLibrary.new({
     Title = "Xera Hub | 由Q3E4汉化",
     Description = "B站: 清空年份gi GitHub: OAO-Kamu QQ: 1042858162",
     Keybind = Enum.KeyCode.U,
-    Logo = 'http://www.roblox.com/asset/?id=75225673325066',
+    Logo = 'http://www.roblox.com/asset/?id=114862678460165',
     ConfigFolder = "汉化 XeraHubConfigs"
 })
 
