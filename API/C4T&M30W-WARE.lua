@@ -243,7 +243,8 @@ local ITab = Window:MakeTab({
 	Icon = "rbxassetid://4483345998",
 	PremiumOnly = false
 })
-
+local Section = ITab:AddSection({ Name = "==>更新日志<==" })
+ITab:AddParagraph("[+]增加  [=]修复  [-]删除 [#]无法修复", "[+]脚本于今天正式发布!\n[+]执行脚本时随机切换主题(黑白/粉白)之间\n[+]增加更新日志\n[+]在'Main'中添加子弹追踪\n[#]Doors页面Bug问题无法被修复\n[=]修复脚本走路时视角奇怪和跳跃视角抖动")
 ITab:AddParagraph("欢迎回来!" .. DispName,"@" .. UserName)
 local Section = ITab:AddSection({ Name = "玩家详情" })
 ITab:AddParagraph("玩家信息","你的名称: " .. DispName .. "(@" .. UserName .. ") | 语言: " .. LocaleId .. " | 会员状态:" .. premiumStatus .. " | 在Studio:" .. IsStudios .. "\n账号注册天数: " .. Dayage .. "天(" .. Yearage .. "年)\n你的地址: " .. Count .. " | VPN地址: " .. tostring(VPNID) .. "\n执行器: " .. executor .. "\n最大人数:" .. maxPlayers)
@@ -999,6 +1000,18 @@ Tab:AddToggle({
 		    game.Lighting.Ambient = Color3.new(0, 0, 0)
 		end
 	end
+})
+Tab:AddButton({
+  Name = "高级子弹追踪  [优化版]",
+  Callback = function()
+      loadstring(game:HttpGet(" https://raw.githubusercontent.com/OAO-Kamu/Main/refs/heads/main/hhbsndns.lua"))()
+  end
+})
+Tab:AddButton({
+  Name = " 高级子弹追踪 [最好的子弹追踪]",
+  Callback = function()
+      loadstring(game:HttpGet("https://atlasteam.live/silentaim"))()
+  end
 })
 Tab:AddButton({
   Name = "稳定穿墙",
@@ -6718,72 +6731,6 @@ MiscTab:AddButton({
         wait(20)
     end    
 })
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local StarterGui = game:GetService("StarterGui")
-
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-local camera = workspace.CurrentCamera
-
-local shakePower = 0
-local targetFOV = 70
-local fovSpeed = 10
-
-local baseOffsetZ = -1
-local bobAmount = 0.2
-local bobSpeed = 2
-
-player.CameraMode = Enum.CameraMode.Classic
-
-RunService.RenderStepped:Connect(function()
-	for _, part in ipairs(character:GetChildren()) do
-		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and part.Name ~= "Head" then
-			part.LocalTransparencyModifier = 0
-		end
-	end
-end)
-
-humanoid.HealthChanged:Connect(function(health)
-	if health < humanoid.MaxHealth then
-		shakePower += 0.6
-	end
-end)
-
-humanoid.StateChanged:Connect(function(_, state)
-	if state == Enum.HumanoidStateType.Landed then
-		shakePower += 0.8
-	end
-end)
-
-workspace.ChildAdded:Connect(function(child)
-	if child:IsA("Explosion") and (child.Position - camera.CFrame.Position).Magnitude < 40 then
-		shakePower += 1.2
-	end
-end)
-
-RunService.RenderStepped:Connect(function(dt)
-	local time = tick()
-
-	local bob = Vector3.new(
-		math.sin(time * bobSpeed) * bobAmount,
-		math.abs(math.cos(time * bobSpeed)) * bobAmount * 0.6,
-		0
-	)
-
-	local shake = Vector3.new(
-		math.random(-100, 100) / 100 * shakePower,
-		math.random(-100, 100) / 100 * shakePower,
-		math.random(-100, 100) / 100 * shakePower
-	)
-
-	shakePower = math.max(shakePower - 5 * dt, 0)
-
-	humanoid.CameraOffset = Vector3.new(0, 0, baseOffsetZ) + bob + shake
-	camera.FieldOfView = camera.FieldOfView + (targetFOV - camera.FieldOfView) * fovSpeed * dt
-end)
 
 wait(3.666917813)
 local loadTime = os.clock() - startTime
