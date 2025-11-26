@@ -1,1 +1,830 @@
-Hello World("print")
+-- 汉化开源由: Q3E4
+--[[======================================================
+⚙️ XERA HUB — MONSTER, PLAYER & BATTERY ESP (V0.14) by Nobody
+========================================================]]
+repeat task.wait() until game:IsLoaded() and game:GetService("Players").LocalPlayer
+------------------------------------------------------------
+-- 🧩 Services
+------------------------------------------------------------
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local LHRP = Character:WaitForChild("HumanoidRootPart", 10)
+
+local PointLight = Instance.new("PointLight")
+PointLight.Name = "ESP_Light"
+PointLight.Range = 60
+PointLight.Brightness = 2
+PointLight.Shadows = false
+PointLight.Enabled = true
+if LHRP then PointLight.Parent = LHRP end
+
+------------------------------------------------------------
+-- 🪟 Sugar UI GUI
+------------------------------------------------------------
+local SugarLibrary = loadstring(game:HttpGetAsync('https://raw.githubusercontent.com/Yomkav2/Sugar-UI/refs/heads/main/Source'))()
+local Notification = SugarLibrary.Notification
+
+local Window = SugarLibrary.new({
+    Title = "Xera Hub | 由Q3E4汉化",
+    Description = "B站: 清空年份gi GitHub: OAO-Kamu QQ: 1042858162",
+    Keybind = Enum.KeyCode.U,
+    Logo = 'http://www.roblox.com/asset/?id=75225673325066',
+    ConfigFolder = "汉化 XeraHubConfigs"
+})
+
+------------------------------------------------------------
+-- 🔔 Notifications 辅助函数
+------------------------------------------------------------
+local function notifytext(text, color, duration)
+    Notification.new({
+        Title = "Xera Notification",
+        Description = text,
+        Duration = duration or 3,
+        Icon = "bell"
+    })
+end
+
+local function playSound(id)
+    local s = Instance.new("Sound", LocalPlayer:WaitForChild("PlayerGui"))
+    s.SoundId = "rbxassetid://" .. id
+    s.Volume = 0.1
+    s:Play()
+    game.Debris:AddItem(s, 3)
+end
+
+local function alertnotif() playSound(6176997734) end
+local function normalnotif() playSound(4590662766) end
+
+------------------------------------------------------------
+-- ⚙️ ESP Settings
+------------------------------------------------------------
+local Monster_Enabled = true
+local Battery_Enabled = true
+local Light_Enabled = true
+local Player_Enabled = true
+
+local Monster_Drawings = {}
+local Battery_Drawings = {}
+local KnownMonsters = {}
+local KnownBatteries = {}
+
+local MonsterSettings = {}
+local BatterySettings = {}
+
+local Player_Drawings = {}
+local PlayerSettings = {}
+local A666_Stage = 0
+local A666_HidingMessageDelay = false
+
+------------------------------------------------------------
+-- 🎨 Drawing Helper
+------------------------------------------------------------
+local function safeRemove(drawing)
+    pcall(function()
+        if drawing and drawing.Remove then
+            drawing:Remove()
+        end
+    end)
+end
+
+local function CreateESPObject(label, color)
+    local box = Drawing.new("Square")
+    box.Filled = false
+    box.Visible = false
+
+    local name = Drawing.new("Text")
+    name.Center = true
+    name.Size = 16
+    name.Font = 2
+    name.Outline = true
+    name.Visible = false
+    name.Text = label or "Entity"
+
+    local dist = Drawing.new("Text")
+    dist.Center = true
+    dist.Size = 14
+    dist.Font = 2
+    dist.Outline = true
+    dist.Visible = false
+
+    local tracer = Drawing.new("Line")
+    tracer.Thickness = 1.5
+    tracer.Visible = false
+
+    local health = Drawing.new("Square")
+    health.Filled = true
+    health.Visible = false
+    health.Color = Color3.fromRGB(0, 255, 0)
+
+    return {
+        Box = box,
+        Name = name,
+        Distance = dist,
+        Tracer = tracer,
+        Health = health,
+        Color = color or Color3.fromRGB(255,255,255),
+        Label = label or "Entity"
+    }
+end
+
+------------------------------------------------------------
+-- 👾 Monsters
+------------------------------------------------------------
+local MonsterNames = {
+    ["monster"] = {label = "A-60", color = Color3.fromRGB(255, 0, 0)},
+    ["monster2"] = {label = "A-120/A-200", color = Color3.fromRGB(255, 120, 0)},
+    ["Spirit"] = {label = "A-100", color = Color3.fromRGB(140, 0, 255)},
+    ["handdebris"] = {label = "A-250", color = Color3.fromRGB(255, 0, 0)},
+    ["jack"] = {label = "A-40", color = Color3.fromRGB(200, 200, 200)},
+    ["Guardian"] = {label = "A-400", color = Color3.fromRGB(10, 10, 10)},
+    ["???"] = {label = "A-666",color = Color3.fromRGB(255, 0, 0)},
+    ["evilbunger"] = {label = "Evil Bunger",color = Color3.fromRGB(255, 165, 0)},
+}
+
+local PrimeNames = {
+    ["monster"] = {label = "A-60'", color = Color3.fromRGB(0, 0, 255),checkParamChildren = "Static",checkParamName = "SoundId",checkParamValue = "8028069841"},
+}
+
+local function addMonsterESP(mon)
+    task.wait()
+    if KnownMonsters[mon] then return end
+    local info = MonsterNames[mon.Name]
+    if not info then return end
+    local PrimeInfo = PrimeNames[mon.Name]
+    if PrimeInfo then
+        local ParamChildren = mon:FindFirstChild(PrimeInfo.checkParamChildren, true)
+
+        if ParamChildren and ParamChildren:IsA("Sound") then
+            if not ParamChildren.IsLoaded then ParamChildren.Loaded:Wait() end
+        end
+        
+        if ParamChildren then
+            local property = ParamChildren[PrimeInfo.checkParamName] or "null"
+            local prime = false
+            if typeof(PrimeInfo.checkParamValue) == "string" then
+                if string.find(property,PrimeInfo.checkParamValue) then prime = true end
+            else
+                if ParamChildren[PrimeInfo.checkParamName] == PrimeInfo.checkParamValue then prime = true end
+            end
+            
+            if prime then info = PrimeInfo end
+        end
+    end
+    local esp
+    if mon.Name == "???" then
+        A666_Stage = A666_Stage + 1 
+        esp = CreateESPObject(info.label.." Stage "..A666_Stage, info.color)
+    else
+        esp = CreateESPObject(info.label, info.color)
+    end
+    Monster_Drawings[mon] = {esp = esp, info = info}
+    KnownMonsters[mon] = true
+
+    alertnotif()
+    if mon.Name == "???" then
+        notifytext("⚠ "..info.label.." spawned. Hide in a LOCKER if his distance is ≤ 400m, otherwise run as fast as you can before A-666 hit his 8 stage", info.color, 3)
+    else
+        notifytext("⚠ Monster spawned: " .. info.label, info.color, 3)
+    end
+end
+
+local function removeMonsterESP(mon)
+    local data = Monster_Drawings[mon]
+    if not data then return end
+    local esp, info = data.esp, data.info
+
+    for _,v in pairs(esp) do
+        safeRemove(v)
+    end
+    Monster_Drawings[mon] = nil
+    KnownMonsters[mon] = nil
+
+    normalnotif()
+    notifytext("✅ Monster despawned: " .. (info and info.label or "?"), Color3.fromRGB(100,255,100), 2)
+end
+
+------------------------------------------------------------
+-- 🔋 Batteries
+------------------------------------------------------------
+local function addBatteryESP(obj)
+    pcall(function()
+        if KnownBatteries[obj] then return end
+        if obj.Name ~= "battery" then return end
+        if obj.Parent.Parent.Name ~= "rooms" then return end
+        local esp = CreateESPObject("Battery", Color3.fromRGB(255, 143, 74))
+        Battery_Drawings[obj] = esp
+        KnownBatteries[obj] = true
+        notifytext("🔋 Battery spawned! Grab it!", Color3.fromRGB(255,143,74), 3)
+        normalnotif()
+    end)
+end
+
+local function removeBatteryESP(obj)
+    local esp = Battery_Drawings[obj]
+    if not esp then return end
+    if not KnownBatteries[obj] then return end
+    for _,v in pairs(esp) do
+        safeRemove(v)
+    end
+    Battery_Drawings[obj] = nil
+    notifytext("🔋 Battery gone.", Color3.fromRGB(255,143,74), 3)
+    normalnotif()
+    KnownBatteries[obj] = nil
+end
+
+------------------------------------------------------------
+-- 🧍 Player ESP
+------------------------------------------------------------
+local function addPlayerESP(plr)
+    if plr == LocalPlayer then return end
+    if Player_Drawings[plr] then return end
+    local esp = CreateESPObject(plr.Name, Color3.fromRGB(50,150,255))
+    Player_Drawings[plr] = esp
+end
+
+local function removePlayerESP(plr)
+    local esp = Player_Drawings[plr]
+    if esp then
+        for _,v in pairs(esp) do
+            safeRemove(v)
+        end
+    end
+    Player_Drawings[plr] = nil
+end
+
+for _,p in ipairs(Players:GetPlayers()) do
+    addPlayerESP(p)
+end
+Players.PlayerAdded:Connect(addPlayerESP)
+Players.PlayerRemoving:Connect(removePlayerESP)
+
+------------------------------------------------------------
+-- 🔍 Entity Registration
+------------------------------------------------------------
+local rooms = workspace:WaitForChild("rooms",10)
+workspace.ChildAdded:Connect(function(obj)
+    if MonsterNames[obj.Name] then addMonsterESP(obj) end
+end)
+
+rooms.DescendantAdded:Connect(function(child)
+    if child:IsA("Model") and child.Name == "battery" and not KnownBatteries[child] then
+        addBatteryESP(child)
+    elseif MonsterNames[child.Name] then
+        addMonsterESP(child)
+    end
+end)
+
+workspace.DescendantRemoving:Connect(function(obj)
+    if MonsterNames[obj.Name] then
+        removeMonsterESP(obj)
+    elseif obj.Name == "battery" and KnownBatteries[obj] then
+        removeBatteryESP(obj)
+    end
+end)
+
+------------------------------------------------------------
+-- 🧠 ESP Tabs
+------------------------------------------------------------
+local ESP_Tab = Window:NewTab({
+    Title = "ESP",
+    Description = "实体显示设置",
+    Icon = "eye"
+})
+
+------------------------------------------------------------
+-- 👤 Player ESP
+------------------------------------------------------------
+ESP_Tab:NewSection({
+    Title = "玩家ESP",
+    Icon = "users",
+    Position = "Left"
+})
+
+PlayerSettings = {
+    TracerEnabled = true,
+    NameEnabled = true,
+    DistanceEnabled = true,
+    BoxEnabled = true,
+    HealthEnabled = true,
+    BoxColor = Color3.fromRGB(50,150,255),
+    TracerColor = Color3.fromRGB(50,150,255),
+    NameColor = Color3.fromRGB(255,255,255),
+    DistanceColor = Color3.fromRGB(180,180,180),
+    HealthColor = Color3.fromRGB(0,255,0),
+}
+
+ESP_Tab:NewToggle({
+    Title = "玩家ESP",
+    Name = "PlayerESP",
+    Default = true,
+    Callback = function(value)
+        Player_Enabled = value
+        notifytext("玩家ESP: " .. (value and "开启" or "关闭"), Color3.fromRGB(50,150,255), 2)
+    end
+})
+
+ESP_Tab:NewToggle({
+    Title = "玩家方框",
+    Name = "PlayerBox",
+    Default = true,
+    Callback = function(value)
+        PlayerSettings.BoxEnabled = value
+    end
+})
+
+ESP_Tab:NewColorPicker({
+    Title = "方框颜色",
+    Name = "PlayerBoxColor",
+    Color = PlayerSettings.BoxColor,
+    Callback = function(value)
+        PlayerSettings.BoxColor = value
+    end
+})
+
+ESP_Tab:NewToggle({
+    Title = "玩家射线",
+    Name = "PlayerTracer",
+    Default = true,
+    Callback = function(value)
+        PlayerSettings.TracerEnabled = value
+    end
+})
+
+ESP_Tab:NewColorPicker({
+    Title = "射线颜色",
+    Name = "PlayerTracerColor",
+    Color = PlayerSettings.TracerColor,
+    Callback = function(value)
+        PlayerSettings.TracerColor = value
+    end
+})
+
+ESP_Tab:NewToggle({
+    Title = "玩家名称",
+    Name = "PlayerName",
+    Default = true,
+    Callback = function(value)
+        PlayerSettings.NameEnabled = value
+    end
+})
+
+ESP_Tab:NewColorPicker({
+    Title = "名称颜色",
+    Name = "PlayerNameColor",
+    Color = PlayerSettings.NameColor,
+    Callback = function(value)
+        PlayerSettings.NameColor = value
+    end
+})
+
+ESP_Tab:NewToggle({
+    Title = "玩家距离",
+    Name = "PlayerDistance",
+    Default = true,
+    Callback = function(value)
+        PlayerSettings.DistanceEnabled = value
+    end
+})
+
+ESP_Tab:NewColorPicker({
+    Title = "距离颜色",
+    Name = "PlayerDistanceColor",
+    Color = PlayerSettings.DistanceColor,
+    Callback = function(value)
+        PlayerSettings.DistanceColor = value
+    end
+})
+
+ESP_Tab:NewToggle({
+    Title = "玩家血条",
+    Name = "PlayerHealth",
+    Default = true,
+    Callback = function(value)
+        PlayerSettings.HealthEnabled = value
+    end
+})
+
+ESP_Tab:NewColorPicker({
+    Title = "血条颜色",
+    Name = "PlayerHealthColor",
+    Color = PlayerSettings.HealthColor,
+    Callback = function(value)
+        PlayerSettings.HealthColor = value
+    end
+})
+
+------------------------------------------------------------
+-- 👾 Monsters ESP
+------------------------------------------------------------
+ESP_Tab:NewSection({
+    Title = "怪物ESP",
+    Icon = "ghost",
+    Position = "Right"
+})
+
+ESP_Tab:NewToggle({
+    Title = "怪物ESP",
+    Name = "MonsterESP",
+    Default = true,
+    Callback = function(value)
+        Monster_Enabled = value
+        notifytext("怪物ESP: " .. (value and "开启" or "关闭"), Color3.fromRGB(255, 0, 0), 2)
+    end
+})
+
+for monsterName, monsterInfo in pairs(MonsterNames) do
+    ESP_Tab:NewSection({
+        Title = monsterInfo.label,
+        Icon = "alert-triangle",
+        Position = "Left"
+    })
+
+    MonsterSettings[monsterInfo.label] = {
+        TracerEnabled = true,
+        NameEnabled = true,
+        DistanceEnabled = true,
+        BoxEnabled = true,
+        BoxColor = monsterInfo.color,
+        TracerColor = monsterInfo.color,
+        NameColor = monsterInfo.color,
+        DistanceColor = Color3.fromRGB(180,180,180),
+    }
+
+    ESP_Tab:NewToggle({
+        Title = monsterInfo.label.." 方框",
+        Name = monsterInfo.label.."Box",
+        Default = true,
+        Callback = function(value)
+            MonsterSettings[monsterInfo.label].BoxEnabled = value
+        end
+    })
+
+    ESP_Tab:NewColorPicker({
+        Title = monsterInfo.label.." 颜色",
+        Name = monsterInfo.label.."Color",
+        Color = monsterInfo.color,
+        Callback = function(value)
+            MonsterSettings[monsterInfo.label].BoxColor = value
+            MonsterSettings[monsterInfo.label].TracerColor = value
+            MonsterSettings[monsterInfo.label].NameColor = value
+        end
+    })
+
+    ESP_Tab:NewToggle({
+        Title = monsterInfo.label.." 射线",
+        Name = monsterInfo.label.."Tracer",
+        Default = true,
+        Callback = function(value)
+            MonsterSettings[monsterInfo.label].TracerEnabled = value
+        end
+    })
+
+    ESP_Tab:NewColorPicker({
+        Title = monsterInfo.label.." 射线颜色",
+        Name = monsterInfo.label.."TracerColor",
+        Color = monsterInfo.color,
+        Callback = function(value)
+            MonsterSettings[monsterInfo.label].TracerColor = value
+        end
+    })
+
+    ESP_Tab:NewToggle({
+        Title = monsterInfo.label.." 名称",
+        Name = monsterInfo.label.."Name",
+        Default = true,
+        Callback = function(value)
+            MonsterSettings[monsterInfo.label].NameEnabled = value
+        end
+    })
+
+    ESP_Tab:NewColorPicker({
+        Title = monsterInfo.label.." 名称颜色",
+        Name = monsterInfo.label.."NameColor",
+        Color = monsterInfo.color,
+        Callback = function(value)
+            MonsterSettings[monsterInfo.label].NameColor = value
+        end
+    })
+
+    ESP_Tab:NewToggle({
+        Title = monsterInfo.label.." 距离",
+        Name = monsterInfo.label.."Distance",
+        Default = true,
+        Callback = function(value)
+            MonsterSettings[monsterInfo.label].DistanceEnabled = value
+        end
+    })
+
+    ESP_Tab:NewColorPicker({
+        Title = monsterInfo.label.." 距离颜色",
+        Name = monsterInfo.label.."DistanceColor",
+        Color = Color3.fromRGB(180,180,180),
+        Callback = function(value)
+            MonsterSettings[monsterInfo.label].DistanceColor = value
+        end
+    })
+end
+
+ESP_Tab:NewSection({
+    Title = "Prime怪物",
+    Icon = "star",
+    Position = "Right"
+})
+
+for monsterName, monsterInfo in pairs(PrimeNames) do
+    ESP_Tab:NewSection({
+        Title = monsterInfo.label,
+        Icon = "crown",
+        Position = "Left"
+    })
+
+    MonsterSettings[monsterInfo.label] = {
+        TracerEnabled = true,
+        NameEnabled = true,
+        DistanceEnabled = true,
+        BoxEnabled = true,
+        BoxColor = monsterInfo.color,
+        TracerColor = monsterInfo.color,
+        NameColor = monsterInfo.color,
+        DistanceColor = Color3.fromRGB(180,180,180),
+    }
+
+    ESP_Tab:NewToggle({
+        Title = monsterInfo.label.." 方框",
+        Name = monsterInfo.label.."Box",
+        Default = true,
+        Callback = function(value)
+            MonsterSettings[monsterInfo.label].BoxEnabled = value
+        end
+    })
+
+    ESP_Tab:NewColorPicker({
+        Title = monsterInfo.label.." 颜色",
+        Name = monsterInfo.label.."Color",
+        Color = monsterInfo.color,
+        Callback = function(value)
+            MonsterSettings[monsterInfo.label].BoxColor = value
+            MonsterSettings[monsterInfo.label].TracerColor = value
+            MonsterSettings[monsterInfo.label].NameColor = value
+        end
+    })
+
+    ESP_Tab:NewToggle({
+        Title = monsterInfo.label.." 射线",
+        Name = monsterInfo.label.."Tracer",
+        Default = true,
+        Callback = function(value)
+            MonsterSettings[monsterInfo.label].TracerEnabled = value
+        end
+    })
+
+    ESP_Tab:NewColorPicker({
+        Title = monsterInfo.label.." 射线颜色",
+        Name = monsterInfo.label.."TracerColor",
+        Color = monsterInfo.color,
+        Callback = function(value)
+            MonsterSettings[monsterInfo.label].TracerColor = value
+        end
+    })
+
+    ESP_Tab:NewToggle({
+        Title = monsterInfo.label.." 名称",
+        Name = monsterInfo.label.."Name",
+        Default = true,
+        Callback = function(value)
+            MonsterSettings[monsterInfo.label].NameEnabled = value
+        end
+    })
+
+    ESP_Tab:NewColorPicker({
+        Title = monsterInfo.label.." 名称颜色",
+        Name = monsterInfo.label.."NameColor",
+        Color = monsterInfo.color,
+        Callback = function(value)
+            MonsterSettings[monsterInfo.label].NameColor = value
+        end
+    })
+
+    ESP_Tab:NewToggle({
+        Title = monsterInfo.label.." 距离",
+        Name = monsterInfo.label.."Distance",
+        Default = true,
+        Callback = function(value)
+            MonsterSettings[monsterInfo.label].DistanceEnabled = value
+        end
+    })
+
+    ESP_Tab:NewColorPicker({
+        Title = monsterInfo.label.." 距离颜色",
+        Name = monsterInfo.label.."DistanceColor",
+        Color = Color3.fromRGB(180,180,180),
+        Callback = function(value)
+            MonsterSettings[monsterInfo.label].DistanceColor = value
+        end
+    })
+end
+
+------------------------------------------------------------
+-- 🔋 Battery ESP
+------------------------------------------------------------
+ESP_Tab:NewSection({
+    Title = "电池ESP",
+    Icon = "battery",
+    Position = "Left"
+})
+
+BatterySettings = {
+    TracerEnabled = true,
+    NameEnabled = true,
+    DistanceEnabled = true,
+    BoxEnabled = true,
+    Color = Color3.fromRGB(255,143,74),
+    DistanceColor = Color3.fromRGB(180,180,180),
+}
+
+ESP_Tab:NewToggle({
+    Title = "电池ESP",
+    Name = "BatteryESP",
+    Default = true,
+    Callback = function(value)
+        Battery_Enabled = value
+        notifytext("电池ESP: " .. (value and "开启" or "关闭"), Color3.fromRGB(255,143,74), 2)
+    end
+})
+
+ESP_Tab:NewToggle({
+    Title = "电池方框",
+    Name = "BatteryBox",
+    Default = true,
+    Callback = function(value)
+        BatterySettings.BoxEnabled = value
+    end
+})
+
+ESP_Tab:NewToggle({
+    Title = "电池射线",
+    Name = "BatteryTracer",
+    Default = true,
+    Callback = function(value)
+        BatterySettings.TracerEnabled = value
+    end
+})
+
+ESP_Tab:NewToggle({
+    Title = "电池名称",
+    Name = "BatteryName",
+    Default = true,
+    Callback = function(value)
+        BatterySettings.NameEnabled = value
+    end
+})
+
+ESP_Tab:NewToggle({
+    Title = "电池距离",
+    Name = "BatteryDistance",
+    Default = true,
+    Callback = function(value)
+        BatterySettings.DistanceEnabled = value
+    end
+})
+
+ESP_Tab:NewColorPicker({
+    Title = "电池颜色",
+    Name = "BatteryColor",
+    Color = BatterySettings.Color,
+    Callback = function(value)
+        BatterySettings.Color = value
+    end
+})
+
+ESP_Tab:NewColorPicker({
+    Title = "电池距离颜色",
+    Name = "BatteryDistanceColor",
+    Color = BatterySettings.DistanceColor,
+    Callback = function(value)
+        BatterySettings.DistanceColor = value
+    end
+})
+
+------------------------------------------------------------
+-- 💡 Light Control
+------------------------------------------------------------
+local LightTab = Window:NewTab({
+    Title = "光照",
+    Description = "光照控制设置",
+    Icon = "lightbulb"
+})
+
+LightTab:NewSection({
+    Title = "点光源控制",
+    Icon = "sun",
+    Position = "Left"
+})
+
+LightTab:NewToggle({
+    Title = "启用光照",
+    Name = "EnableLight",
+    Default = true,
+    Callback = function(value)
+        Light_Enabled = value
+        PointLight.Enabled = value
+        notifytext("玩家光照: " .. (value and "开启" or "关闭"), Color3.fromRGB(255,255,0), 2)
+    end
+})
+
+LightTab:NewSlider({
+    Title = "光照亮度",
+    Name = "LightBrightness",
+    Min = 0,
+    Max = 5,
+    Default = 2,
+    Callback = function(value)
+        PointLight.Brightness = value
+    end
+})
+
+LightTab:NewSlider({
+    Title = "光照范围",
+    Name = "LightRange",
+    Min = 10,
+    Max = 100,
+    Default = 60,
+    Callback = function(value)
+        PointLight.Range = value
+    end
+})
+
+------------------------------------------------------------
+-- ⚙️ 配置管理
+------------------------------------------------------------
+local configNames = Windows.ListConfigs()  -- Get existing configs
+
+local configDropdown = ConfigSection:NewDropdown({
+	Title = "已保存的文件",
+	Data = configNames,
+	Default = configNames[1] or "无",
+	Callback = function(a)
+		print("Selected config: " .. a)
+	end,
+})
+
+local configNameTextbox = ConfigSection:NewTextbox({
+	Title = "要保存文件的名字",
+	Default = "",
+	FileType = "",  -- Empty
+	Callback = function(name)
+		print("Entered name: " .. name)
+	end,
+})
+
+ConfigSection:NewButton({
+	Title = "新建保存文件",
+	Callback = function()
+		local newName = configNameTextbox.Get()
+		if newName and newName ~= "" then
+			Windows.SaveConfig(newName)
+			configNames = Windows.ListConfigs()
+			configDropdown.Refresh(configNames)
+			print("Created config: " .. newName)
+		end
+	end,
+})
+
+ConfigSection:NewButton({
+	Title = "加载选择的文件",
+	Callback = function()
+		local selected = configDropdown.Get()
+		if selected then
+			Windows.LoadConfig(selected)
+			print("Loaded config: " .. selected)
+		end
+	end,
+})
+
+ConfigSection:NewButton({
+	Title = "删除选择的文件",
+	Callback = function()
+		local selected = configDropdown.Get()
+		if selected then
+			delfile(Windows.ConfigFolder .. "/" .. selected .. ".json")
+			configNames = Windows.ListConfigs()
+			configDropdown.Refresh(configNames)
+			print("Deleted config: " .. selected)
+		end
+	end,
+})
+
+ConfigSection:NewButton({
+	Title = "重置选择的文件",
+	Callback = function()
+		configNames = Windows.ListConfigs()
+		configDropdown.Refresh(configNames)
+		print("Configs refreshed")
+	end,
+})
