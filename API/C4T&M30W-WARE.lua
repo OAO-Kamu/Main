@@ -12,13 +12,145 @@ https://github.com/OAO-Kamu/
 改脚本仅供参考! 为了照顾萌新我不得不这样做🙃
 
 ==]]
+--print(("\n"):rep(100))
+--^ string library functions
+--[[]
+local gmatch, sub, gsub, format, char, byte = string.gmatch, string.sub, string.gsub, string.format, string.char, string.byte
+local uchar, ucode, upattern = utf8.char, utf8.codepoint, utf8.charpattern
+
+local tostring, tonumber = tostring, tonumber
+local tinsert = table.insert
+
+local floor, clamp, random = math.floor, math.clamp, math.random
+local bit32_bxor = bit32.bxor
+
+local LuaEscapeCodes = {
+    ["b"] = "\b",
+    ["n"] = "\n",
+    ["r"] = "\r",
+    ["t"] = "\t",
+    ["f"] = "\f",
+    ["v"] = "\v",
+    ["\""] = "\"",
+    ["'"] = "\'",
+    ["\\"] = "\\",
+}
+
+local Quotes = {
+    ['"'] = "'",
+    ["'"] = "\""
+}
+
+local function ParseStrings(File, ByteLength)
+    local function ParseString(String) -- Formats the \u{...}, \f, \b, ...
+        String = gsub(String, "\\(.)", function(Character)
+            return LuaEscapeCodes[Character]
+        end)
+        String = gsub(String, "\\u{([0-9A-Fa-f]+)}", function(Hex)
+            return uchar(tonumber(Hex, 16))
+        end)
+
+        return String
+    end
+
+    local Crypt = {
+        Encoded = {}, -- Dictionary
+        Used = {}, -- Array
+        CharLen = ByteLength or random(4, 7) -- Byte length
+    };
+
+    function Crypt:GenerateKey(len)
+        len = len or 64
+
+        local key = "";
+        local hex = {"a", "b", "c", "d", "e", "f", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0"}
+
+        for _ = 1, len do
+            key = key .. hex[random(1, #hex)]
+        end
+
+        return key
+    end
+
+    function Crypt:Encode(String, Quote)
+        local Encoded = ""
+
+        String = gsub(String, Quote, "\\" .. Quote)
+        String = ParseString(String)
+
+        for Char in gmatch(String, upattern) do
+            local Generated = Crypt:GenerateKey(Crypt.CharLen) .. Crypt:GenerateKey(Crypt.CharLen)
+
+            Crypt.Encoded[Char] = Crypt.Encoded[Char] or Generated
+
+            Encoded = Encoded .. (Crypt.Encoded[Char])
+        end
+
+        return Encoded
+    end
+
+    function Crypt:GetList()
+        local List = Crypt.Encoded;
+        local String = "{\n"
+
+        for Char, Value in next, List do
+            Value = gsub(Value, "'", "\\'")
+
+            String = String .. format("\t\t['%s'] = uchar(0x%02x);\n", Value, ucode(Char))
+        end
+
+        return String .. "\t}"
+    end
+
+    Crypt.FunctionCode = [[do ({})[1] = "ENCODED VIA STRING ENCODER V2.0, Please do not remove these credits." end
+local uchar = utf8.char
+
+local function %s(String)
+    local A = String:gsub("%s", %s)
+    return A;
+end
+]]
+--[[
+    Crypt.FunctionName = "_" .. Crypt:GenerateKey(8);
+
+    --& Important Variables
+
+    local Pattern = "%s([^%s]*)%s" -- %s is quote
+
+    for N, Quote in next, Quotes do
+        --local QuotePattern = format(Pattern, Opposing, Quote, Quote, Opposing, Quote)
+        local QuotePattern = format(Pattern, Quote, Quote, Quote)
+        local NQuotePattern = format(Pattern, N, N, N)
+
+        local function Inner(String)
+            if String == "" then
+                return
+            end
+
+            String = gsub(String, NQuotePattern, function(String2)
+                return N .. String2 .. N
+            end)
+
+            return format("%s([[%s]]--)", Crypt.FunctionName, Crypt:Encode(String, Quote))
+            --[[ 
+        end
+
+        File = gsub(File, QuotePattern, Inner)
+    end
+
+    return format(Crypt.FunctionCode, Crypt.FunctionName, string.rep(".", Crypt.CharLen * 2), Crypt:GetList()) .. File
+end
+
+local Code2 = ParseStrings('print("Hello World!")', 4)
+print(Code2)
+ ]]
 
 local L = loadstring or load
 local NotificationLib = "https://raw.githubusercontent.com/BloodLetters/Ash-Libs/refs/heads/main/source.lua"
 local GUI = L(game:HttpGet(NotificationLib))()
-local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/OAO-Kamu/UI-Library-Interface/refs/heads/main/%E6%94%B9%E7%89%88%20Orion.lua'))()
+local OrionLib = L(game:HttpGet('https://raw.githubusercontent.com/OAO-Kamu/UI-Library-Interface/refs/heads/main/%E6%94%B9%E7%89%88%20Orion.lua'))()
+L(game:HttpGet("https://raw.github.com/OAO-Kamu/Main/main/API/Dog-Dog-Q3E4.lua"))() -- 不要删这个!!! 删了后面脚本的有些功能不起作用!!!
 local startTime = os.clock() 
-local Luna = loadstring(game:HttpGet("https://raw.nebulasoftworks.xyz/luna", true))()
 function gradient(text, startColor, endColor)
     local result = ""
     local length = #text
@@ -82,12 +214,12 @@ LocalPlayer.CharacterAdded:Connect(function()
 end)
 
 local Window = OrionLib:MakeWindow({
-    Name = "ASII的缝合脚本中心 " .. gradient("V1.0.1", Color3.fromHex("#00FF87"), Color3.fromHex("#60EFFF")), 
+    Name = gradient("Catware v1.1.9", Color3.fromHex("#00FF87"), Color3.fromHex("#60EFFF")),
     HidePremium = false, 
     SaveConfig = true, 
-    ConfigFolder = "OrionTest",
+    ConfigFolder = "oooiskOrionTest",
     IntroEnabled = true,
-    IntroText = "ASII的缝合脚本中心已响应!",
+    IntroText = "缝合开源脚本  最佳脚本中心!",
     IntroIcon = 4483345998,
     Icon = 4483345998,
     CloseCallback = function()
@@ -170,6 +302,7 @@ ITab:AddButton({ Name =  gradient("Unload Orion Library", Color3.fromHex("#FF000
         	Image = "rbxassetid://4483345998",
         	Time = 5
         })
+        wait(1)
         OrionLib:Destroy()
 end})
 --local ITab = Window:MakeTab({
@@ -1861,14 +1994,12 @@ MainTab:AddButton({
     end    
 })
 
+if game.GameId==1000233041 then
 local GameTab = Window:MakeTab({
     Name = "3008",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
-local Section = GameTab:AddSection({ Name = "这个3008Tab由于bug问题只能一直显示\n如果不显示任何内容就是没有支持的服务器；当然有时候会出现一个新的Tab" })
-
-if game.GameId==1000233041 then
     local Tab3008 = GameTab:AddSection({
         Name = "3008"
     })
@@ -2997,7 +3128,7 @@ elseif game.GameId == 1650291138 then
     })
 
 -- Game ID 2440500124 - Doors
-elseif game.GameId == 2440500124 then
+elseif game.GameId == 2440500124 or 6516141723 then
     local Tab = Window:MakeTab({
         Name = "Doors",
         Icon = "rbxassetid://4483345998",
@@ -3017,6 +3148,1284 @@ elseif game.GameId == 2440500124 then
             loadstring(game:HttpGet("https://pastebin.com/raw/M4mpGErb",true))()
         end    
     })
+        Tab:AddButton({
+        Name = "bob Hub[OP]",
+        Callback = function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/notzanocoddz4/bobdoors/main/main.lua"))()
+        end    
+    })
+Tab:AddButton({
+    Name = "怪物提示+跟随宠物",
+    Callback = function()
+        --loadstring(game:HttpGet("https://raw.githubusercontent.com/LukeLor/LukeLor/refs/heads/main/Helpful%20Rush.lua"))()
+        local char = workspace:WaitForChild(game.Players.LocalPlayer.Name)
+        local oxygen = char:GetAttribute("Oxygen")
+
+        Caption = function(text)
+            require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption(text,true)
+        end
+
+
+        TypeCaption = function(text, typewait) 
+            for i = 1, #text do
+                require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption(string.sub(text,1,i) ,true)
+                if typewait ~= nil then
+                    task.wait(typewait)
+                else
+                    task.wait(0.2)
+                end
+            end
+        end
+
+        SpeakerIconShow = function(IconId)
+            local newui = Instance.new("ScreenGui")
+            newui.Parent = game.Players.LocalPlayer.PlayerGui
+            newui.Name = "SpeakerIcon"
+
+
+            local icon = "rbxassetid://"..IconId
+            local captiontext = game.Players.LocalPlayer.PlayerGui.MainUI.MainFrame.Caption
+            local iconholder = Instance.new("ImageLabel")
+            iconholder.Name = "Icon"
+            iconholder.Image = icon
+            iconholder.Parent = newui
+            local aspect = Instance.new("UIAspectRatioConstraint")
+            aspect.Parent = iconholder
+            local pos =  captiontext.Position + UDim2.new(-.05,-0.031,0,-118)
+            iconholder.Size = UDim2.new(0.1, 0,0.18, 0)
+            iconholder.BackgroundTransparency = 1
+
+            iconholder.Position = pos
+
+
+
+
+        end
+        SpeakerIconHide = function()
+            local newui = game.Players.LocalPlayer.PlayerGui.SpeakerIcon
+            newui.Name = "BeingRemoved"
+
+            local iconholder = newui.Icon
+
+            local ts = game:GetService("TweenService")
+            
+            
+                            --coroutine.resume(coci)
+            ts:Create(iconholder, TweenInfo.new(7), {ImageTransparency = 1}):Play()
+
+            game.Debris:AddItem(newui, 8)
+        end
+
+        SolveAnchor = function(item, fully)
+
+            if item:IsA("Model") then
+                if item.Name == "_NestHandler" then
+                    local AnchorIdentify = {
+                        ["A"] = 1,
+                        ["B"] = 2,
+                        ["C"] = 3,
+                        ["D"] = 4,
+                        ["E"] = 5,
+                        ["F"] = 6
+                    }
+                    local Anchors = {}
+
+                    while not next(Anchors) and task.wait() do
+                        for _, Anchor in item:GetChildren() do
+                            if Anchor.Name == "MinesAnchor" and not Anchor:GetAttribute("Activated") then
+                                table.insert(Anchors, AnchorIdentify[Anchor.Sign.TextLabel.Text], Anchor)
+                            end
+                        end
+
+                        local AnchorsIndex = {}
+                        for Index in Anchors do
+                            table.insert(AnchorsIndex, Index)
+                        end
+
+                        local NumberIndex = math.min( unpack(AnchorsIndex) )
+                        local NextAnchor = Anchors[NumberIndex]
+
+                        if NumberIndex > 1 then
+                            local Code = game.Players.LocalPlayer.PlayerGui.MainUI.MainFrame.AnchorHintFrame.Code.Text
+
+
+                            --                        local Solved = SolveAnchor(Code, Offset)
+
+
+                            if  not NextAnchor:GetAttribute("Activated") and fully then
+
+                                NextAnchor.AnchorRemote:InvokeServer( tostring(Code) )
+                            else
+                                if not NextAnchor:GetAttribute("Activated") and not fully then
+                                    return NextAnchor
+                                end
+
+                            end
+
+                        end
+                    end
+
+
+                end
+            end
+        end
+
+
+        FireProxy = function(proxy)
+            local holdtime = proxy.HoldDuration
+            local timeheld = 0
+            if fireproximityprompt then
+                fireproximityprompt(proxy)
+                return
+            end
+
+            proxy:InputHoldBegin()
+            holdtime = 0.1 --Testing + I know what im doing.
+            wait(0.05)
+            if holdtime == 0 then
+                wait(0.05)
+                proxy:InputHoldEnd()
+                print("PromptInitiated")
+            else
+                repeat wait(0.1) timeheld = timeheld+0.1 until timeheld >= holdtime
+                wait(0.1)
+                proxy:InputHoldEnd()
+                print("PromptFinished")
+            end
+        end
+
+        CheckIf = function(what, where)
+            if where:IsAncestorOf(what) then
+                return true
+            else
+                return false
+            end
+
+        end
+
+        LerpTo = function(model, target, path)
+            local alpha = 0
+            local speed = 45
+            local dist = (model.PrimaryPart.Position - target.Position).Magnitude
+            local relativeSpeed = dist / speed
+            local startCFrame = model.PrimaryPart.CFrame
+            local loop = nil
+            local reachedTarget = Instance.new("BindableEvent")
+
+            loop = game:GetService("RunService").Heartbeat:Connect(function(delta)
+
+
+                local goalCFrame = startCFrame:Lerp(target.CFrame, alpha)
+                model:PivotTo(goalCFrame)
+                alpha += delta / relativeSpeed
+                if alpha >= 1 then
+                    loop:Disconnect()
+                    reachedTarget:Fire()
+                end
+            end)
+
+            reachedTarget.Event:Wait()
+
+        end
+
+        print("got past func")
+
+        local coci = coroutine.create(function()
+                        while wait() do
+                                
+                            while task.wait() do
+                                    wait()
+                                    
+                                        char = workspace:WaitForChild(game.Players.LocalPlayer.Name)
+        oxygen = char:GetAttribute("Oxygen")
+                        end
+                end
+
+                    end)
+            
+                        coroutine.resume(coci)
+        print("running ci")
+        --ProxyDoor : CurrentDoor.Lock.UnlockPrompt
+        --Event : CurrentDoor.ClientOpen:FireServer()
+        --KeyPrompt : HasKey.ModulePrompt
+        --ValvePrompt : ValvePrompt
+
+        local roomnumdupe = 0
+        local rushhelper = game:GetObjects("rbxassetid://94481096227907")[1]
+            rushhelper.Parent = workspace
+            local pitch = Instance.new("PitchShiftSoundEffect")
+            pitch.Octave = 0.5
+            local talk = Instance.new("Sound")
+            talk.SoundId = "rbxassetid://18637567424"
+            talk.RollOffMaxDistance = 100
+            talk.Parent = rushhelper.Main
+            talk.Name = "Talk"
+            pitch.Parent = talk
+            talk.PlaybackSpeed = 0.75
+            talk.Volume = 0.2
+        local parttofix = Instance.new("Part")
+        parttofix.Anchored = true
+        parttofix.Parent = workspace
+        parttofix.Name = "RotPart"
+        parttofix.Position = char:WaitForChild("HumanoidRootPart").Position
+        local ogar = char:WaitForChild("Humanoid").AutoRotate
+        char:WaitForChild("Humanoid").AutoRotate = false
+        parttofix.Rotation = Vector3.new(0, 0, -0)
+        parttofix.CanCollide = false
+        parttofix.Transparency = 1
+        wait()
+        char:PivotTo(parttofix.CFrame)
+        wait()
+        if ogar ~= nil then
+        char:WaitForChild("Humanoid").AutoRotate = ogar
+        else
+            char:WaitForChild("Humanoid").AutoRotate = true
+        end
+        parttofix:Destroy()
+            local newatt = Instance.new("Attachment")
+            newatt.Parent = char:WaitForChild("UpperTorso")
+            newatt.WorldCFrame = char:WaitForChild("Head").CFrame
+            newatt.WorldPosition = char:WaitForChild("Head").Position + Vector3.new(1.705, -0.5, -0.558)
+            newatt.Name = "RushAtt"
+            rushhelper.Root.AlignPosition.Attachment1 = newatt
+            print("loaded rush and positioned it")
+
+            local entitytablelines = {{ 
+                "Something is here...",
+                "It seems like I'm... aproaching.?",
+                "Hide!", 
+                "Something's on its way!"-- Rush
+            },
+            {
+                "Something is here... be ready.",
+                "Seems like an annoying entity is coming.",
+                "Hide!", 
+                "It will come back."-- Ambush
+            },
+            {
+                "GO GO GO!",
+                "RUN FOR YOUR LIFE!",
+                "Run." -- Seek
+            },
+            {
+                "Follow its rules. Turn around when it tells you.", 
+                "Halt is up ahead." -- Halt
+            },
+            {
+                "Stay quiet.", 
+                "Crouch!", 
+                "Don't be loud."--Figure
+            },
+            {
+                "Psst.", 
+                "Around you!"--Screech
+            },
+            {
+                "Don't look!", 
+                "Avoid eye contact."
+            }--Eyes
+            ,{
+                "Uhm... the door?","Look at the door! Something may be lurking...",
+                "Look I'll hand it to you. The number for this room is "..roomnumdupe.."."
+            }--Dupe
+                ,{
+                    "A-120."
+                }, {
+                    "A-60."
+                },{
+                    "It- Blitz..."
+                },
+                {
+                    "It isn't funny!",
+                    "Stop laughing.",
+                    "Giggle up ahead.", 
+                    "Watch above you."
+                }--Giggle
+            }
+
+            local deathmsgs = {{"Sorry I failed you..."},{"..."},{"Are you there!?"}, {"Please, respond!"}, {"What... happened?"},{"I'll do better, I promise..."}}
+
+            local Players = game:GetService("Players")
+            local SoundService = game:GetService("SoundService")
+            local Camera = workspace.CurrentCamera
+            local DeathName = "DeathBackgroundBlue"
+            local ReplicatedStorage = game:GetService("ReplicatedStorage")
+            local TweenService = game:GetService("TweenService")
+            local remotesfolder = ReplicatedStorage:WaitForChild("RemotesFolder")
+            local Player = Players.LocalPlayer
+            local PlayerGui = Player:WaitForChild("PlayerGui")
+            local MainUI = PlayerGui:WaitForChild("MainUI")
+            local Death = MainUI:WaitForChild("Death")
+            local HelpfulDialogue = Death:WaitForChild("HelpfulDialogue")
+            local MainGame = MainUI:WaitForChild("Initiator"):WaitForChild("Main_Game")
+            local Health = MainGame:WaitForChild("Health")
+            local Music = Health:WaitForChild("Music")
+            local UserInputService = game:GetService("UserInputService")
+
+
+
+            --Death Handler
+
+            local Skipped = false
+            local Ended = false
+            remotesfolder.DeathHint.OnClientEvent:Connect(function(DeathHints)
+                PlayerGui = Player:WaitForChild("PlayerGui")
+                 MainUI = PlayerGui:WaitForChild("MainUI")
+                 Death = MainUI:WaitForChild("Death")
+            HelpfulDialogue = Death:WaitForChild("HelpfulDialogue")
+                Ended = false
+            
+            --HelpfulDialogue.Visible = false
+                --MainGame.fovtarget = 70
+            wait(4)
+                
+                UserInputService.InputBegan:Connect(function(i,proc)
+                    if proc then return end
+
+                    if Ended == false then
+
+                        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.Gamepad1 then
+                            Skipped = true
+                        end
+                    end
+                end)
+            --	loadstring(game:HttpGet("https://raw.githubusercontent.com/LukeLor/LukeLor/refs/heads/main/CaptionDoorsSource.lua"))()
+                --SpeakerIconShow("rbxassetid://83305678419163")
+                for i, Hint in ipairs(DeathHints) do
+                    --	HelpfulDialogue.TextTransparency = 1
+
+                    --Caption(Hint)
+                    if Skipped then
+                        --Caption("")	
+                    else
+                        --Caption("")	
+                    end
+                    local Tick = tick() + 5 + utf8.len(HelpfulDialogue.ContentText) / 30
+                    if i == 1 or not Skipped then
+                        task.wait(0.5)
+                    else
+                        task.wait(0.1)
+                    end
+                    Skipped = false
+                    for i2 = 1, 10000000000000 do
+                        task.wait()
+                        if Tick <= tick() then
+                            break
+                        end
+                        if Skipped then
+                            break
+                        end
+                    end
+                    local Time = 0.4
+                    if Skipped then
+                        Time = 0.25
+                    end
+                    --	TweenService:Create(HelpfulDialogue, TweenInfo.new(Time, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {TextTransparency = 1}):Play()
+                    task.wait(Time + 0.01)
+                end
+                Ended = true
+                --SpeakerIconHide()
+                --Caption("")
+                wait(0.5)
+                SpeakerIconShow("82511368550076")
+                    local text = deathmsgs[math.random(1,6)][1]
+            for i = 1, #text do
+
+
+                wait(0.002)
+                rushhelper.Humanoid:LoadAnimation(rushhelper.Talk):Play()
+                rushhelper.Main.Talk:Play()
+                print(string.sub(text, 1, i))
+
+                Caption(string.sub(text, 1, i))
+                wait(0.002)
+            end
+            
+                SpeakerIconHide()
+            end)
+            print("Initiate mechanic")
+            
+            game.Workspace.ChildAdded:Connect(function(child)
+            if child.Name == "AmbushMoving" then
+                local text = entitytablelines[2][math.random(1,4)]
+                print(text)
+                SpeakerIconShow("99087926706059")
+                for i = 1, #text do
+
+
+                    wait(0.002)
+                    rushhelper.Humanoid:LoadAnimation(rushhelper.Talk):Play()
+                    rushhelper.Main.Talk:Play()
+                    print(string.sub(text, 1, i))
+
+                    Caption(string.sub(text, 1, i))
+                    wait(0.002)
+                end
+                SpeakerIconHide()
+            elseif child.Name == "RushMoving" then
+                SpeakerIconShow("99087926706059")
+                local text = entitytablelines[1][math.random(1,4)]
+                print(text)
+                for i = 1, #text do
+                    wait(0.002)
+                    rushhelper.Humanoid:LoadAnimation(rushhelper.Talk):Play()
+                    rushhelper.Main.Talk:Play()
+                    print(string.sub(text, 1, i))
+                    Caption(string.sub(text, 1, i))
+                    wait(0.002)
+                end 
+                    SpeakerIconHide()
+
+
+            elseif child.Name == "A60" then
+                SpeakerIconShow("99087926706059")
+                local text = entitytablelines[10][1]
+                print(text)
+                for i = 1, #text do
+                    wait(0.002)
+                    rushhelper.Humanoid:LoadAnimation(rushhelper.Talk):Play()
+                    rushhelper.Main.Talk:Play()
+                    print(string.sub(text, 1, i))
+                    Caption(string.sub(text, 1, i))
+                    wait(0.002)
+                end
+                    SpeakerIconHide()
+            elseif child.Name == "A120" then
+                SpeakerIconShow("99087926706059")
+                local text = entitytablelines[9][1]
+                print(text)
+                for i = 1, #text do
+                    wait(0.002)
+                    rushhelper.Humanoid:LoadAnimation(rushhelper.Talk):Play()
+                    rushhelper.Main.Talk:Play()
+                    print(string.sub(text, 1, i))
+                    Caption(string.sub(text, 1, i))
+                    wait(0.002)
+                end 
+                    SpeakerIconHide()
+            elseif child.Name == "BackdoorRush" then
+                SpeakerIconShow("99087926706059")
+                local text = entitytablelines[11][1]
+                print(text)
+                for i = 1, #text do
+                    wait(0.002)
+                    rushhelper.Humanoid:LoadAnimation(rushhelper.Talk):Play()
+                    rushhelper.Main.Talk:Play()
+                    print(string.sub(text, 1, i))
+                    Caption(string.sub(text, 1, i))
+                    wait(0.002)
+                end
+                SpeakerIconHide()
+            elseif child.Name == "Eyes" or child.Name == "BackdoorLookman" then
+                SpeakerIconShow("99087926706059")
+                local text = entitytablelines[7][math.random(1,2)]
+                print(text)
+                for i = 1, #text do
+                    wait(0.002)
+                    rushhelper.Humanoid:LoadAnimation(rushhelper.Talk):Play()
+                    rushhelper.Main.Talk:Play()
+                    print(string.sub(text, 1, i))
+                    Caption(string.sub(text, 1, i))
+                    wait(0.002)
+                end 
+                    SpeakerIconHide()
+            end
+            end)
+
+
+            workspace.CurrentCamera.ChildAdded:Connect(function(child)
+                
+            for _, guidance in pairs(workspace.CurrentCamera:GetChildren()) do
+                if guidance:IsA("BasePart") and guidance.Name == "Guidance" then
+                    local weld = Instance.new("WeldConstraint")
+                    rushhelper:PivotTo(guidance.CFrame)
+                    weld.Parent = guidance
+                    weld.Part0 = guidance
+                    weld.Part1 = rushhelper.Root
+                    rushhelper.Root.AlignPosition.Enabled = false
+                    rushhelper.Root.Anchored = false
+                end
+            end
+            if child.Name == "Screech" then
+                        rushhelper.Top.Attachment.RushNormal.Transparency =  NumberSequence.new( 0.99, 1)
+                rushhelper.Bottom.Attachment.RushNormal.Transparency =  NumberSequence.new( 0.99, 1)
+                rushhelper.Main.BlackTrail.Transparency = NumberSequence.new( 0.99, 1)
+            
+                SpeakerIconShow("99087926706059")
+                local text = entitytablelines[6][math.random(1,2)]
+                print(text)
+                for i = 1, #text do
+                    wait(0.002)
+                    rushhelper.Humanoid:LoadAnimation(rushhelper.Talk):Play()
+                    rushhelper.Main.Talk:Play()
+                    print(string.sub(text, 1, i))
+                    Caption(string.sub(text, 1, i))
+                    wait(0.002)
+                end
+                    SpeakerIconHide()
+            end
+        end)
+        local cool = coroutine.create(function()
+                local oc = false
+                        while wait() do
+                                
+                            while task.wait() do
+                                    wait()
+                                    
+                                        if oxygen < 25 and oc == false then
+        SpeakerIconShow("99087926706059")
+                    local text = "Hey, your oxygen levels are getting low! Hang in there!" 
+            for i = 1, #text do
+
+
+                wait(0.002)
+                rushhelper.Humanoid:LoadAnimation(rushhelper.Talk):Play()
+                rushhelper.Main.Talk:Play()
+                print(string.sub(text, 1, i))
+
+                Caption(string.sub(text, 1, i))
+                wait(0.002)
+            end
+                SpeakerIconHide()
+                        oc = true
+        wait(10)
+                        oc = false
+                        
+            
+        end
+                    end
+                end
+
+                    end)
+            
+                        coroutine.resume(cool)
+
+
+
+
+        workspace.CurrentCamera.ChildRemoved:Connect(function(inst) 
+                if inst.Name == "Screech" then
+                rushhelper.Top.Attachment.RushNormal.Transparency =  NumberSequence.new( 0)
+                rushhelper.Bottom.Attachment.RushNormal.Transparency =  NumberSequence.new( 0)
+                rushhelper.Main.BlackTrail.Transparency = NumberSequence.new( 0)
+                
+            end
+
+                if inst:IsA("BasePart") and inst.Name == "Guidance" then
+                                inst.WeldConstraint:Destroy()
+                    rushhelper.Root.AlignPosition.Enabled = true
+                    rushhelper.Root.Anchored = false
+                    
+                
+            end
+
+                    
+            
+        end)
+
+        game.Workspace.CurrentRooms.DescendantAdded:Connect(function(v)
+                wait(0.01)
+            if v:IsA("Model") then
+                if v.Name == "_NestHandler" then
+                    
+                
+                    v:WaitForChild("Console", 9e9):WaitForChild("Button", 9e9):WaitForChild("ActivateEventPrompt", 9e9)
+                    repeat task.wait() until v.Console.Button.ActivateEventPrompt:GetAttribute("Interactions")
+
+                        
+                        
+                 
+                
+                
+                
+                    local cona = coroutine.create(function()
+                        while wait(math.random(15,30)) do
+                                
+                            while task.wait(math.random(15,30)) do
+                                    wait()
+                                    local anchor = SolveAnchor(v, false)
+                                    if anchor ~= nil then
+
+
+                                        local pfs = game:GetService("PathfindingService")
+                                        local path = pfs:CreatePath()
+
+                                        path:ComputeAsync(rushhelper.Root.Position, anchor.PrimaryPart.Position)
+                                        for _, wpts in pairs(path:GetWaypoints()) do
+                                            local part = Instance.new("Part")
+                                            part.Anchored = true
+                                            part.Size = Vector3.new(1,1,1)
+                                            part.Position = wpts.Position + Vector3.new(0,4.456,0)
+                                            part.Parent = workspace
+                                            --part.Shape = Enum.PartType.Ball
+                                            part.Name = "Node"
+                                            part.Transparency = 1
+                                            rushhelper.Root.AlignPosition.Enabled = false
+                                            rushhelper.Root.Anchored = true
+                                            part.Massless = true
+                                            part.CanCollide = false
+                                            part.CanTouch = false
+                                            part.CanQuery = false
+                                            LerpTo(rushhelper, part)
+                                        end
+                                        SolveAnchor(v, true)
+                                        while true do 
+                                            wait()
+                                            if (rushhelper.Root.Position - newatt.WorldPosition).Magnitude > 10 then
+                                                LerpTo(rushhelper, char:WaitForChild("Head"))
+                                            else
+                                                break
+                                            end
+                                        end
+                                        rushhelper:PivotTo(newatt.WorldCFrame)
+                                        rushhelper.Root.Anchored = false
+                                        rushhelper.Root.AlignPosition.Enabled = true
+                                    end
+                                end			
+
+                        end
+
+
+                    end)
+            
+                        coroutine.resume(cona)
+            
+
+                end 
+                end
+        end)
+
+
+        game.ReplicatedStorage.GameData.LatestRoom:GetPropertyChangedSignal("Value"):Connect(function()
+                wait(0.01)
+        roomnumdupe = game.ReplicatedStorage.GameData.LatestRoom.Value
+                
+            local croom = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]
+            local foundfuses = CheckIf("FuseHolder",croom)
+            if foundfuses then
+                for _, fuses in croom:GetDescendants() do
+                    if fuses:IsA("Model") and fuses.Name =="FuseHolder" then
+                        local pfs = game:GetService("PathfindingService")
+                        local path = pfs:CreatePath()
+
+                        path:ComputeAsync(rushhelper.Root.Position, fuses.PrimaryPart.Position)
+                        for _, wpts in pairs(path:GetWaypoints()) do
+                            local part = Instance.new("Part")
+                            part.Anchored = true
+                            part.Size = Vector3.new(1,1,1)
+                            part.Position = wpts.Position + Vector3.new(0,4.456,0)
+                            part.Parent = workspace
+                            --part.Shape = Enum.PartType.Ball
+                            part.Name = "Node"
+                            part.Transparency = 1
+                            rushhelper.Root.AlignPosition.Enabled = false
+                            rushhelper.Root.Anchored = true
+                            part.Massless = true
+                            part.CanCollide = false
+                            part.CanTouch = false
+                            part.CanQuery = false
+                            LerpTo(rushhelper, part)
+
+                            part:Destroy()
+
+
+                        end
+                        --LerpTo(rushhelper, WaterPump.PrimaryPart)
+
+                        local pathgen = pfs:CreatePath()
+                        local gen
+
+                        local hasgen = CheckIf("MinesGenerator", croom)	
+                        if hasgen then
+                            for _, models in croom:GetDescendants() do
+                                if models:IsA("Model") and models.Name == "MinesGenerator" then
+                                    gen = models
+                                end
+                            end
+                        end
+                        pathgen:ComputeAsync(rushhelper.Root.Position, gen.PrimaryPart.Position)
+                        for _, wpts in pairs(pathgen:GetWaypoints()) do
+                            local part = Instance.new("Part")
+                            part.Anchored = true
+                            part.Size = Vector3.new(1,1,1)
+                            part.Position = wpts.Position + Vector3.new(0,4.456,0)
+                            part.Parent = workspace
+                            --part.Shape = Enum.PartType.Ball
+                            part.Name = "Node"
+                            part.Transparency = 1
+                            rushhelper.Root.AlignPosition.Enabled = false
+                            rushhelper.Root.Anchored = true
+                            part.Massless = true
+                            part.CanCollide = false
+                            part.CanTouch = false
+                            part.CanQuery = false
+                            LerpTo(rushhelper, part)
+
+                            part:Destroy()
+                        end
+                        fuses.FuseObtain.ModulePrompt.MaxActivationDistance = 100000
+                        fuses.FuseObtain.ModulePrompt.RequiresLineOfSight = false
+                        wait(0.01)
+                            FireProxy(fuses.FuseObtain.ModulePrompt)
+                            wait(0.01)
+                            if hasgen then
+                                for _, FuseInput in gen.Fuses:GetChildren() do
+                                    if FuseInput:FindFirstChild("FusesPrompt") then
+                                        FuseInput.FusePrompt.MaxActivationDistance = 100000
+                                        FuseInput.FusesPrompt.RequiresLineOfSight = false
+                                        wait(0.01)
+                                        FireProxy(FuseInput.FusesPrompt)
+                                    end
+                                end
+                            end
+
+
+                end
+                for _, models in croom:GetDescendants() do
+                    if models:IsA("Model") and models.Name == "MinesGenerator" and models.Lever.LeverPrompt.Enabled == true then
+                        FireProxy(models.Lever.LeverPrompt)
+                    end
+                end
+
+
+                while true do 
+                    wait()
+
+                    if (rushhelper.Root.Position - newatt.WorldPosition).Magnitude > 10 then
+                        LerpTo(rushhelper, char:WaitForChild("Head"))
+                    else
+                        break
+                    end
+                end
+                rushhelper:PivotTo(newatt.WorldCFrame)
+                rushhelper.Root.Anchored = false
+                rushhelper.Root.AlignPosition.Enabled = true
+            end end			
+
+
+
+
+            if croom:FindFirstChild("_DamHandler") then
+                local cod = coroutine.create(function()
+                    while wait(math.random(15,30)) do
+                        for _, Flood in croom._DamHandler:GetChildren() do
+                            if Flood.Name:sub(1, 5) == "Flood" then
+                                for _, WaterPump in Flood.Pumps:GetChildren() do
+                                    if WaterPump.Wheel.ValvePrompt.Enabled then
+                                        local pfs = game:GetService("PathfindingService")
+                                        local path = pfs:CreatePath()
+
+                                        path:ComputeAsync(rushhelper.Root.Position, WaterPump.PrimaryPart.Position)
+                                        for _, wpts in pairs(path:GetWaypoints()) do
+                                            local part = Instance.new("Part")
+                                            part.Anchored = true
+                                            part.Size = Vector3.new(1,1,1)
+                                            part.Position = wpts.Position + Vector3.new(0,4.456,0)
+                                            part.Parent = workspace
+                                            --part.Shape = Enum.PartType.Ball
+                                            part.Name = "Node"
+                                            part.Transparency = 1
+                                            rushhelper.Root.AlignPosition.Enabled = false
+                                            rushhelper.Root.Anchored = true
+                                            part.Massless = true
+                                            part.CanCollide = false
+                                            part.CanTouch = false
+                                            part.CanQuery = false
+                                            LerpTo(rushhelper, part)
+                                            if WaterPump.Wheel.ValvePrompt.Enabled == false or not WaterPump.Wheel.ValvePrompt then
+                                                break
+                                            end
+                                            part:Destroy()
+
+
+                                        end
+                                        --LerpTo(rushhelper, WaterPump.PrimaryPart)
+
+                                        if WaterPump.Wheel.ValvePrompt.Enabled and WaterPump.Wheel.ValvePrompt then
+                                            WaterPump.Wheel.ValvePrompt.MaxActivationDistance = 100000
+                                            WaterPump.Wheel.ValvePrompt.RequiresLineOfSight = false
+                                            wait(0.01)
+                                            FireProxy(WaterPump.Wheel.ValvePrompt)
+                                        end
+
+
+                                        while true do 
+                                            wait()
+
+                                            if (rushhelper.Root.Position - newatt.WorldPosition).Magnitude > 10 then
+                                                LerpTo(rushhelper, char:WaitForChild("Head"))
+                                            else
+                                                break
+                                            end
+                                        end
+                                        rushhelper:PivotTo(newatt.WorldCFrame)
+                                        rushhelper.Root.Anchored = false
+                                        rushhelper.Root.AlignPosition.Enabled = true
+                                    end
+                                end
+
+                            end
+                        end
+
+                    end
+
+
+                end)
+                coroutine.resume(cod)	
+            end
+                
+
+            if croom:FindFirstChild("LiveBreakerPolePickup") then
+                local cobp = coroutine.create(function()
+                    while wait(math.random(15,30)) do
+                        for _, bpzlp in croom:GetDescendants() do
+                            if bpzlp.Name == "LiveBreakerPolePickup" then
+
+
+                                local pfs = game:GetService("PathfindingService")
+                                local path = pfs:CreatePath()
+
+                                path:ComputeAsync(rushhelper.Root.Position, bpzlp.PrimaryPart.Position)
+                                for _, wpts in pairs(path:GetWaypoints()) do
+                                    local part = Instance.new("Part")
+                                    part.Anchored = true
+                                    part.Size = Vector3.new(1,1,1)
+                                    part.Position = wpts.Position + Vector3.new(0,4.456,0)
+                                    part.Parent = workspace
+                                    --part.Shape = Enum.PartType.Ball
+                                    part.Name = "Node"
+                                    part.Transparency = 1
+                                    rushhelper.Root.AlignPosition.Enabled = false
+                                    rushhelper.Root.Anchored = true
+                                    part.Massless = true
+                                    part.CanCollide = false
+                                    part.CanTouch = false
+                                    part.CanQuery = false
+                                    LerpTo(rushhelper, part)
+                                    part:Destroy()
+
+
+                                end
+                                --	LerpTo(rushhelper, WaterPump.PrimaryPart)
+                                local Prompt
+                                for _, ActivateEventPrompt in bpzlp:GetChildren() do
+
+                                    if ActivateEventPrompt:IsA("ProximityPrompt") and ActivateEventPrompt.RequiresLineOfSight then
+                                        Prompt = ActivateEventPrompt
+                                    end
+
+                                end
+
+                                if Prompt  then
+                                    Prompt.MaxActivationDistance = 100000
+                                    Prompt.RequiresLineOfSight = false		
+                                    wait(0.01)
+                                    FireProxy(Prompt)
+                                end
+
+
+                                while true do 
+                                    wait()
+
+                                    if (rushhelper.Root.Position - newatt.WorldPosition).Magnitude > 10 then
+                                        LerpTo(rushhelper, char:WaitForChild("Head"))
+                                    else
+                                        break
+                                    end
+                                end
+                                rushhelper:PivotTo(newatt.WorldCFrame)
+                                rushhelper.Root.Anchored = false
+                                rushhelper.Root.AlignPosition.Enabled = true
+
+
+                            end
+
+                        end
+
+                    end
+                end)
+                coroutine.resume(cobp)
+            end
+            
+
+
+            if croom:FindFirstChild("Modular_Bookshelf") then
+                local cob = coroutine.create(function()
+                    while wait(math.random(30,45)) do
+                                for _, shelfs in croom:GetDescendants() do
+                        if shelfs.Name == "Modular_Bookshelf" and shelfs:FindFirstChild("LiveHintBook") then
+
+
+                            local pfs = game:GetService("PathfindingService")
+                            local path = pfs:CreatePath()
+
+                            path:ComputeAsync(rushhelper.Root.Position, shelfs.LiveHintBook.PrimaryPart.Position)
+                            for _, wpts in pairs(path:GetWaypoints()) do
+                                local part = Instance.new("Part")
+                                part.Anchored = true
+                                part.Size = Vector3.new(1,1,1)
+                                part.Position = wpts.Position + Vector3.new(0,4.456,0)
+                                part.Parent = workspace
+                                --part.Shape = Enum.PartType.Ball
+                                part.Name = "Node"
+                                part.Transparency = 1
+                                rushhelper.Root.AlignPosition.Enabled = false
+                                rushhelper.Root.Anchored = true
+                                part.Massless = true
+                                part.CanCollide = false
+                                part.CanTouch = false
+                                part.CanQuery = false
+                                LerpTo(rushhelper, part)
+
+                                part:Destroy()
+
+
+                            end
+                            --LerpTo(rushhelper, WaterPump.PrimaryPart)
+
+
+                            shelfs.LiveHintBook.ActivateEventPrompt.MaxActivationDistance = 100000
+                            shelfs.LiveHintBook.ActivateEventPrompt.RequiresLineOfSight = false
+                            wait(0.01)
+                            FireProxy(shelfs.LiveHintBook.ActivateEventPrompt)
+
+
+
+                            while true do 
+                                wait()
+
+                                if (rushhelper.Root.Position - newatt.WorldPosition).Magnitude > 10 then
+                                    LerpTo(rushhelper, char:WaitForChild("Head"))
+                                else
+                                    break
+                                end
+                            end
+                            rushhelper:PivotTo(newatt.WorldCFrame)
+                            rushhelper.Root.Anchored = false
+                            rushhelper.Root.AlignPosition.Enabled = true
+
+                        end
+
+                    end
+                            end 
+
+
+                end)
+                coroutine.resume(cob)	
+            end
+            
+
+
+
+
+            if game.ReplicatedStorage.GameData.ChaseInSession.Value == true then
+                SpeakerIconShow("99087926706059")
+                local text = entitytablelines[3][math.random(1,3)]
+                print(text)
+                for i = 1, #text do 
+                    wait(0.002)
+                    rushhelper.Humanoid:LoadAnimation(rushhelper.Talk):Play()
+                    rushhelper.Main.Talk:Play()
+                    print(string.sub(text, 1, i))
+                    Caption(string.sub(text, 1, i))
+                    wait(0.002)
+                end 
+                    SpeakerIconHide()
+            end
+            if game.ReplicatedStorage.GameData.LatestRoom.Value  == 50 then
+                SpeakerIconShow("99087926706059")
+                local text = entitytablelines[5][math.random(1,3)]
+                print(text)
+                for i = 1, #text do 
+                    wait(0.002)
+                    rushhelper.Humanoid:LoadAnimation(rushhelper.Talk):Play()
+                    rushhelper.Main.Talk:Play()
+                    print(string.sub(text, 1, i))
+                    Caption(string.sub(text, 1, i))
+                    wait(0.002)
+                end 
+                    SpeakerIconHide()
+            end
+            for _, dupeRoom in pairs(croom:GetChildren()) do
+                if dupeRoom.Name == "DoorFake"   then
+                    SpeakerIconShow("99087926706059")
+                    local text = entitytablelines[8][math.random(1,3)]
+                    print(text)
+                    for i = 1, #text do
+                        wait(0.002)
+                        rushhelper.Humanoid:LoadAnimation(rushhelper.Talk):Play()
+                        rushhelper.Main.Talk:Play()
+                        print(string.sub(text, 1, i))
+                        Caption(string.sub(text, 1, i))
+                        wait(0.002)
+                    end
+                        SpeakerIconHide()
+                    break
+
+                end
+            end
+            if croom:GetAttribute("RawName") == "HaltHallway" or croom:GetAttribute("RawName") == "JKKKKKKKKSWU" then --
+                SpeakerIconShow("99087926706059")
+                local text = entitytablelines[4][1]
+                print(text)
+                for i = 1, #text do
+
+
+                    wait(0.002)
+                    rushhelper.Humanoid:LoadAnimation(rushhelper.Talk):Play()
+                    rushhelper.Main.Talk:Play()
+                    print(string.sub(text, 1, i))
+
+                    Caption(string.sub(text, 1, i))
+                    wait(0.002)
+                end 
+                    SpeakerIconHide()
+            end
+            if workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value + 1]:GetAttribute("RawName") == "HaltHallway" or workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value + 1]:GetAttribute("RawName") == "JKKKKKKKKSWU" then
+                SpeakerIconShow("99087926706059")
+                local text = entitytablelines[4][2]
+                print(text)
+                for i = 1, #text do
+
+
+                    wait(0.002)
+                    rushhelper.Humanoid:LoadAnimation(rushhelper.Talk):Play()
+                    rushhelper.Main.Talk:Play()
+                    print(string.sub(text, 1, i))
+
+                    Caption(string.sub(text, 1, i))
+                    wait(0.002)
+                end 
+                    SpeakerIconHide()
+            end
+            local cokg = coroutine.create(function()
+                while true do
+                    wait()
+                    local HasKey = false
+                    local CurrentDoor = croom:WaitForChild("Door")
+                    for _,v in pairs(croom:GetDescendants()) do
+                        if v.Name == "KeyObtain" then
+                            HasKey = v
+                                    print("I've got a key to fetch!")
+                            wait(0.1)
+
+                            --Get key;
+                            local KeyClone = HasKey:Clone()
+                            KeyClone.Parent = rushhelper
+                            local pfs = game:GetService("PathfindingService")
+                            local path = pfs:CreatePath()
+
+                            path:ComputeAsync(rushhelper.Root.Position, HasKey.PrimaryPart.Position)
+                            local clone = HasKey:Clone()
+                            for _, wpts in pairs(path:GetWaypoints()) do
+                                local part = Instance.new("Part")
+                                part.Anchored = true
+                                part.Size = Vector3.new(1,1,1)
+                                part.Position = wpts.Position + Vector3.new(0,4.456,0)
+                                part.Parent = workspace
+                                --part.Shape = Enum.PartType.Ball
+                                part.Name = "Node"
+                                rushhelper.Root.AlignPosition.Enabled = false
+                                rushhelper.Root.Anchored = true
+                                part.Massless = true
+                                part.CanCollide = false
+                                part.CanTouch = false
+                                part.CanQuery = false
+                                LerpTo(rushhelper, part)
+                                part:Destroy()
+
+
+                            end
+                            --LerpTo(rushhelper, HasKey.PrimaryPart)
+                            clone.Parent = rushhelper
+                            clone:PivotTo(rushhelper.Root.CFrame)
+                            for _, parts in pairs(clone:GetDescendants()) do
+                                if parts:IsA("Part") or parts:IsA("MeshPart") or parts:IsA("BasePart") then
+                                    parts.Anchored = false
+                                    local weld = Instance.new("WeldConstraint")
+                                    weld.Parent = rushhelper
+                                    weld.Part0 = rushhelper.Root
+                                    weld.Part1 = parts
+                                    parts.Massless = true
+                                    parts.CanCollide = false
+                                    parts.CanTouch = false
+                                    parts.CanQuery = false
+                                    for _, proxiesfound in pairs(parts:GetDescendants()) do
+                                        if proxiesfound:IsA("ProximityPrompt") then
+                                            proxiesfound:Destroy()
+                                        end
+                                    end
+                                end
+
+                            end
+
+
+                            local ogmad = HasKey.ModulePrompt.MaxActivationDistance
+                            local ogrlos = HasKey.ModulePrompt.RequiresLineOfSight
+                            local ogmad2 = CurrentDoor.Lock.MaxActivationDistance
+                            local ogrlos2 = CurrentDoor.Lock.RequiresLineOfSight
+                            --Go to door
+                            local path2 = pfs:CreatePath()
+
+                            path2:ComputeAsync(rushhelper.Root.Position, CurrentDoor.PrimaryPart.Position)
+
+                            for _, wpts in pairs(path2:GetWaypoints()) do
+                                local part = Instance.new("Part")
+                                part.Anchored = true
+                                part.Size = Vector3.new(1,1,1)
+                                part.Position = wpts.Position + Vector3.new(0,4.456,0)
+                                part.Parent = workspace
+                                part.Massless = true
+                                part.CanCollide = false
+                                part.CanTouch = false
+                                part.CanQuery = false
+                                --part.Shape = Enum.PartType.Ball
+                                part.Name = "Node"
+                                rushhelper.Root.AlignPosition.Enabled = false
+                                rushhelper.Root.Anchored = true
+                                LerpTo(rushhelper, part)
+                                part:Destroy()
+
+
+                            end
+                            clone:Destroy()
+                            --LerpTo(rushhelper, CurrentDoor.PrimaryPart)
+
+                            HasKey.ModulePrompt.MaxActivationDistance = 100000
+                            HasKey.ModulePrompt.RequiresLineOfSight = false
+                            wait(0.03)
+
+                            FireProxy(HasKey.ModulePrompt)
+                                    HasKey.ModulePrompt.MaxActivationDistance = ogmad
+                      HasKey.ModulePrompt.RequiresLineOfSight = ogrlos
+                                    
+                            local Anims = char:WaitForChild("Humanoid").Animator:GetPlayingAnimationTracks()
+                            for _,animation in Anims do 
+                                animation:Stop() -- stops pickup
+                            end
+                            CurrentDoor.Lock.UnlockPrompt.MaxActivationDistance = 100000
+                            CurrentDoor.Lock.UnlockPrompt.RequiresLineOfSight = false
+
+
+                            wait(0.03)
+                            FireProxy(CurrentDoor.Lock.UnlockPrompt)
+                            local Anims = char:WaitForChild("Humanoid").Animator:GetPlayingAnimationTracks()
+                            for _,animation in Anims do 
+                                animation:Stop() -- stops unlock
+                            end
+                            wait(0.03)
+                            CurrentDoor.ClientOpen:FireServer()
+                            local Anims = char:WaitForChild("Humanoid").Animator:GetPlayingAnimationTracks()
+                            for _,animation in Anims do 
+                                animation:Stop() -- extra safe
+                            end
+
+                            wait(0.1)
+
+                            while true do 
+                                wait()
+
+                                if (rushhelper.Root.Position - newatt.WorldPosition).Magnitude > 10 then
+                                    LerpTo(rushhelper, char:WaitForChild("Head"))
+                                else
+                                    break
+                                end
+                            end
+                            rushhelper:PivotTo(newatt.WorldCFrame)
+                            rushhelper.Root.Anchored = false
+                            rushhelper.Root.AlignPosition.Enabled = true
+
+
+
+                            for _,v in pairs(croom:GetDescendants()) do
+                                if v.Name == "LeverForGate" then
+                                            print("I've got a lever to activate!") 
+                                    local pfs = game:GetService("PathfindingService")
+                                    local path = pfs:CreatePath()
+
+                                    path:ComputeAsync(rushhelper.Root.Position, v.PrimaryPart.Position)
+                                    local clone = HasKey:Clone()
+                                    for _, wpts in pairs(path:GetWaypoints()) do
+                                        local part = Instance.new("Part")
+                                        part.Anchored = true
+                                        part.Size = Vector3.new(1,1,1)
+                                        part.Position = wpts.Position + Vector3.new(0,4.456,0)
+                                        part.Parent = workspace
+                                        --part.Shape = Enum.PartType.Ball
+                                        part.Name = "Node"
+                                        rushhelper.Root.AlignPosition.Enabled = false
+                                        rushhelper.Root.Anchored = true
+                                        part.Massless = true
+                                        part.CanCollide = false
+                                        part.CanTouch = false
+                                        part.CanQuery = false
+                                        LerpTo(rushhelper, part)
+                                        part:Destroy()
+
+
+                                    end
+                                    if not v.ActivateEventPrompt:GetAttribute("Interactions") then
+        local ogmadg = v.ActivateEventPrompt.MaxActivationDistance
+                            local ogrlosg = v.ActivateEventPrompt.RequiresLineOfSight
+                                            v.ActivateEventPrompt.MaxActivationDistance = 100000
+                            v.ActivateEventPrompt.RequiresLineOfSight = false
+                                        FireProxy(v.ActivateEventPrompt)
+                                                wait(0.1)
+                                                v.ActivateEventPrompt.MaxActivationDistance = ogmadg
+                            v.ActivateEventPrompt.RequiresLineOfSight = ogrlosg
+
+                                    end
+                                                while true do 
+                                wait()
+
+                                if (rushhelper.Root.Position - newatt.WorldPosition).Magnitude > 10 then
+                                    LerpTo(rushhelper, char:WaitForChild("Head"))
+                                else
+                                    break
+                                end
+                            end
+                            rushhelper:PivotTo(newatt.WorldCFrame)
+                            rushhelper.Root.Anchored = false
+                            rushhelper.Root.AlignPosition.Enabled = true
+
+                                end
+                            end
+                        end
+                        end
+                end
+                end)
+
+                
+        end)
+
+        print("s_msg")
+        local text = "你好,我会提示怪物!"
+        SpeakerIconShow("99087926706059")
+        print(text)
+        for i = 1, #text do
+
+
+            wait(0.002)
+            rushhelper.Humanoid:LoadAnimation(rushhelper.Talk):Play()
+            rushhelper.Main.Talk:Play()
+            print(string.sub(text, 1, i))
+
+            Caption(string.sub(text, 1, i))
+            wait(0.002)
+        end
+        wait(5)
+        SpeakerIconHide()
+        print("Up and at it.")
+        char = workspace:FindFirstChild(game.Players.LocalPlayer.Name)
+
+    end    
+})
+Tab:AddButton({
+    Name = "ESP 脚本 [BY: Q3E4]",
+    Callback = function()
+
+    end    
+})
 
 -- Game ID 5203828273 - Dress to impress
 elseif game.GameId == 5203828273 then
@@ -5309,6 +6718,72 @@ MiscTab:AddButton({
         wait(20)
     end    
 })
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local camera = workspace.CurrentCamera
+
+local shakePower = 0
+local targetFOV = 70
+local fovSpeed = 10
+
+local baseOffsetZ = -1
+local bobAmount = 0.2
+local bobSpeed = 2
+
+player.CameraMode = Enum.CameraMode.Classic
+
+RunService.RenderStepped:Connect(function()
+	for _, part in ipairs(character:GetChildren()) do
+		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and part.Name ~= "Head" then
+			part.LocalTransparencyModifier = 0
+		end
+	end
+end)
+
+humanoid.HealthChanged:Connect(function(health)
+	if health < humanoid.MaxHealth then
+		shakePower += 0.6
+	end
+end)
+
+humanoid.StateChanged:Connect(function(_, state)
+	if state == Enum.HumanoidStateType.Landed then
+		shakePower += 0.8
+	end
+end)
+
+workspace.ChildAdded:Connect(function(child)
+	if child:IsA("Explosion") and (child.Position - camera.CFrame.Position).Magnitude < 40 then
+		shakePower += 1.2
+	end
+end)
+
+RunService.RenderStepped:Connect(function(dt)
+	local time = tick()
+
+	local bob = Vector3.new(
+		math.sin(time * bobSpeed) * bobAmount,
+		math.abs(math.cos(time * bobSpeed)) * bobAmount * 0.6,
+		0
+	)
+
+	local shake = Vector3.new(
+		math.random(-100, 100) / 100 * shakePower,
+		math.random(-100, 100) / 100 * shakePower,
+		math.random(-100, 100) / 100 * shakePower
+	)
+
+	shakePower = math.max(shakePower - 5 * dt, 0)
+
+	humanoid.CameraOffset = Vector3.new(0, 0, baseOffsetZ) + bob + shake
+	camera.FieldOfView = camera.FieldOfView + (targetFOV - camera.FieldOfView) * fovSpeed * dt
+end)
 
 wait(3.666917813)
 local loadTime = os.clock() - startTime
