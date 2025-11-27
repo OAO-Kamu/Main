@@ -12,138 +12,7 @@ https://github.com/OAO-Kamu/
 改脚本仅供参考! 为了照顾萌新我不得不这样做🙃
 
 ==]]
---print(("\n"):rep(100))
---^ string library functions
---[[]
-local gmatch, sub, gsub, format, char, byte = string.gmatch, string.sub, string.gsub, string.format, string.char, string.byte
-local uchar, ucode, upattern = utf8.char, utf8.codepoint, utf8.charpattern
 
-local tostring, tonumber = tostring, tonumber
-local tinsert = table.insert
-
-local floor, clamp, random = math.floor, math.clamp, math.random
-local bit32_bxor = bit32.bxor
-
-local LuaEscapeCodes = {
-    ["b"] = "\b",
-    ["n"] = "\n",
-    ["r"] = "\r",
-    ["t"] = "\t",
-    ["f"] = "\f",
-    ["v"] = "\v",
-    ["\""] = "\"",
-    ["'"] = "\'",
-    ["\\"] = "\\",
-}
-
-local Quotes = {
-    ['"'] = "'",
-    ["'"] = "\""
-}
-
-local function ParseStrings(File, ByteLength)
-    local function ParseString(String) -- Formats the \u{...}, \f, \b, ...
-        String = gsub(String, "\\(.)", function(Character)
-            return LuaEscapeCodes[Character]
-        end)
-        String = gsub(String, "\\u{([0-9A-Fa-f]+)}", function(Hex)
-            return uchar(tonumber(Hex, 16))
-        end)
-
-        return String
-    end
-
-    local Crypt = {
-        Encoded = {}, -- Dictionary
-        Used = {}, -- Array
-        CharLen = ByteLength or random(4, 7) -- Byte length
-    };
-
-    function Crypt:GenerateKey(len)
-        len = len or 64
-
-        local key = "";
-        local hex = {"a", "b", "c", "d", "e", "f", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0"}
-
-        for _ = 1, len do
-            key = key .. hex[random(1, #hex)]
-        end
-
-        return key
-    end
-
-    function Crypt:Encode(String, Quote)
-        local Encoded = ""
-
-        String = gsub(String, Quote, "\\" .. Quote)
-        String = ParseString(String)
-
-        for Char in gmatch(String, upattern) do
-            local Generated = Crypt:GenerateKey(Crypt.CharLen) .. Crypt:GenerateKey(Crypt.CharLen)
-
-            Crypt.Encoded[Char] = Crypt.Encoded[Char] or Generated
-
-            Encoded = Encoded .. (Crypt.Encoded[Char])
-        end
-
-        return Encoded
-    end
-
-    function Crypt:GetList()
-        local List = Crypt.Encoded;
-        local String = "{\n"
-
-        for Char, Value in next, List do
-            Value = gsub(Value, "'", "\\'")
-
-            String = String .. format("\t\t['%s'] = uchar(0x%02x);\n", Value, ucode(Char))
-        end
-
-        return String .. "\t}"
-    end
-
-    Crypt.FunctionCode = [[do ({})[1] = "ENCODED VIA STRING ENCODER V2.0, Please do not remove these credits." end
-local uchar = utf8.char
-
-local function %s(String)
-    local A = String:gsub("%s", %s)
-    return A;
-end
-]]
---[[
-    Crypt.FunctionName = "_" .. Crypt:GenerateKey(8);
-
-    --& Important Variables
-
-    local Pattern = "%s([^%s]*)%s" -- %s is quote
-
-    for N, Quote in next, Quotes do
-        --local QuotePattern = format(Pattern, Opposing, Quote, Quote, Opposing, Quote)
-        local QuotePattern = format(Pattern, Quote, Quote, Quote)
-        local NQuotePattern = format(Pattern, N, N, N)
-
-        local function Inner(String)
-            if String == "" then
-                return
-            end
-
-            String = gsub(String, NQuotePattern, function(String2)
-                return N .. String2 .. N
-            end)
-
-            return format("%s([[%s]]--)", Crypt.FunctionName, Crypt:Encode(String, Quote))
-            --[[ 
-        end
-
-        File = gsub(File, QuotePattern, Inner)
-    end
-
-    return format(Crypt.FunctionCode, Crypt.FunctionName, string.rep(".", Crypt.CharLen * 2), Crypt:GetList()) .. File
-end
-
-local Code2 = ParseStrings('print("Hello World!")', 4)
-print(Code2)
- ]]
 
 local L = loadstring or load
 local NotificationLib = "https://raw.githubusercontent.com/BloodLetters/Ash-Libs/refs/heads/main/source.lua"
@@ -214,14 +83,14 @@ LocalPlayer.CharacterAdded:Connect(function()
 end)
 
 local Window = OrionLib:MakeWindow({
-    Name = gradient("Catware v1.1.9", Color3.fromHex("#00FF87"), Color3.fromHex("#60EFFF")),
+    Name = gradient("Catware v1.2.1", Color3.fromHex("#00FF87"), Color3.fromHex("#60EFFF")),
     HidePremium = false, 
-    SaveConfig = true, 
+    SaveConfig = false, 
     ConfigFolder = "oooiskOrionTest",
     IntroEnabled = true,
-    IntroText = "缝合开源脚本  最佳脚本中心!",
-    IntroIcon = 4483345998,
-    Icon = 4483345998,
+    IntroText = "[+]免费脚本开源! [+]最佳免费脚本中心!",
+    IntroIcon = "rbxassetid://114862678460165",
+    Icon = "rbxassetid://114862678460165",
     CloseCallback = function()
         OrionLib:MakeNotification({
         	Name = "窗口已缩小!",
@@ -244,7 +113,7 @@ local ITab = Window:MakeTab({
 	PremiumOnly = false
 })
 local Section = ITab:AddSection({ Name = "==>更新日志<==" })
-ITab:AddParagraph("[+]增加  [=]修复  [-]删除 [#]无法修复", "[+]脚本于今天正式发布!\n[+]执行脚本时随机切换主题(黑白/粉白)之间\n[+]增加更新日志\n[+]在'Main'中添加子弹追踪\n[#]Doors页面Bug问题无法被修复\n[=]修复脚本走路时视角奇怪和跳跃视角抖动")
+ITab:AddParagraph("[+]增加  [=]修复  [-]删除 [#]无法修复", "[+]脚本于今天正式发布!\n[+]执行脚本时随机切换主题(黑白/粉白)之间\n[+]增加更新日志\n[+]在'Main'中添加子弹追踪\n[#]Doors页面Bug问题无法被修复\n[=]修复脚本走路时视角奇怪和跳跃视角抖动\n[+]添加其他优质脚本\n[-]删除少量没用的\n[+]添加开发\n[=]优化布局")
 ITab:AddParagraph("欢迎回来!" .. DispName,"@" .. UserName)
 local Section = ITab:AddSection({ Name = "玩家详情" })
 ITab:AddParagraph("玩家信息","你的名称: " .. DispName .. "(@" .. UserName .. ") | 语言: " .. LocaleId .. " | 会员状态:" .. premiumStatus .. " | 在Studio:" .. IsStudios .. "\n账号注册天数: " .. Dayage .. "天(" .. Yearage .. "年)\n你的地址: " .. Count .. " | VPN地址: " .. tostring(VPNID) .. "\n执行器: " .. executor .. "\n最大人数:" .. maxPlayers)
@@ -886,7 +755,7 @@ local Tab = Window:MakeTab({
 })
 
 local Section = Tab:AddSection({
-	Name = "本地玩家"
+	Name = "运动"
 })
 Tab:AddSlider({
 	Name = "速度",
@@ -964,31 +833,41 @@ Tab:AddTextbox({
 		game.Workspace.Gravity = Value
 	end
 })
-Tab:AddToggle({
-	Name = "穿墙",
-	Default = false,
-	Callback = function(Value)
-		if Value then
-		    Noclip = true
-		    Stepped = game.RunService.Stepped:Connect(function()
-			    if Noclip == true then
-				    for a, b in pairs(game.Workspace:GetChildren()) do
-                        if b.Name == game.Players.LocalPlayer.Name then
-                            for i, v in pairs(game.Workspace[game.Players.LocalPlayer.Name]:GetChildren()) do
-                                if v:IsA("BasePart") then
-                                    v.CanCollide = false
-                                end
-                            end
-                        end
-                    end
-			    else
-				    Stepped:Disconnect()
-			    end
-		    end)
-	    else
-		    Noclip = false
-	    end
-	end
+local Section = Tab:AddSection({
+	Name = "视觉"
+})
+Tab:AddButton({
+    Name = "普京比例",
+    Callback = function()
+        getgenv().Resolution = {
+            [".gg/scripters"] = 0.65
+        }
+
+        local Camera = workspace.CurrentCamera
+        if getgenv().gg_scripters == nil then
+            game:GetService("RunService").RenderStepped:Connect(function()
+                Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, getgenv().Resolution[".gg/scripters"], 0, 0, 0, 1)
+            end)
+        end
+        getgenv().gg_scripters = "g5s"
+    end
+})
+
+Tab:AddButton({
+    Name = "恢复比例",
+    Callback = function()
+        getgenv().Resolution = {
+            [".gg/scripters"] = 1
+        }
+
+        local Camera = workspace.CurrentCamera
+        if getgenv().gg_scripters == nil then
+                game:GetService("RunService").RenderStepped:Connect(function()
+                Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, getgenv().Resolution[".gg/scripters"], 0, 0, 0, 1)
+            end)
+        end
+        getgenv().gg_scripters = "g5s"
+    end
 })
 Tab:AddToggle({
 	Name = "夜视",
@@ -1001,6 +880,23 @@ Tab:AddToggle({
 		end
 	end
 })
+Tab:AddButton({
+  Name = "高亮",
+  Callback = function()
+      loadstring(game:HttpGet("https://pastebin.com/raw/4LDKiJ5a"))()
+  end
+})
+Tab:AddButton({
+	Name = "通用ESP",
+	Callback = function()
+	loadstring(game:HttpGet('https://raw.githubusercontent.com/Lucasfin000/SpaceHub/main/UESP'))()
+	end
+})
+
+local Section = Tab:AddSection({
+	Name = " 杂项"
+})
+
 Tab:AddButton({
   Name = "高级子弹追踪  [优化版]",
   Callback = function()
@@ -1036,13 +932,76 @@ Tab:AddButton({
         end)
   end
 })
-
+Tab:AddToggle({
+	Name = "穿墙",
+	Default = false,
+	Callback = function(Value)
+		if Value then
+		    Noclip = true
+		    Stepped = game.RunService.Stepped:Connect(function()
+			    if Noclip == true then
+				    for a, b in pairs(game.Workspace:GetChildren()) do
+                        if b.Name == game.Players.LocalPlayer.Name then
+                            for i, v in pairs(game.Workspace[game.Players.LocalPlayer.Name]:GetChildren()) do
+                                if v:IsA("BasePart") then
+                                    v.CanCollide = false
+                                end
+                            end
+                        end
+                    end
+			    else
+				    Stepped:Disconnect()
+			    end
+		    end)
+	    else
+		    Noclip = false
+	    end
+	end
+})
 Tab:AddButton({
-    Name="我要紫砂",
+    Name="紫砂",
     Callback=function()
         game.Players.LocalPlayer.Character.Humanoid.Health=0
         HumanDied = true
     end
+})
+Tab:AddButton({
+	Name = "无敌",
+	Callback = function()
+local lp = game:GetService "Players".LocalPlayer
+if lp.Character:FindFirstChild "Head" then
+    local char = lp.Character
+    char.Archivable = true
+    local new = char:Clone()
+    new.Parent = workspace
+    lp.Character = new
+    wait(2)
+    local oldhum = char:FindFirstChildWhichIsA "Humanoid"
+    local newhum = oldhum:Clone()
+    newhum.Parent = char
+    newhum.RequiresNeck = false
+    oldhum.Parent = nil
+    wait(2)
+    lp.Character = char
+    new:Destroy()
+    wait(1)
+    newhum:GetPropertyChangedSignal("Health"):Connect(
+        function()
+            if newhum.Health <= 0 then
+                oldhum.Parent = lp.Character
+                wait(1)
+                oldhum:Destroy()
+            end
+        end)
+    workspace.CurrentCamera.CameraSubject = char
+    if char:FindFirstChild "Animate" then
+        char.Animate.Disabled = true
+        wait(.1)
+        char.Animate.Disabled = false
+    end
+    lp.Character:FindFirstChild "Head":Destroy()
+end
+end
 })
 
 Tab:AddButton({
@@ -1052,15 +1011,747 @@ Tab:AddButton({
     end
 })
 Tab:AddButton({
-  Name = "高亮",
-  Callback = function()
-      loadstring(game:HttpGet("https://pastebin.com/raw/4LDKiJ5a"))()
-  end
-})
-local Section = Tab:AddSection({
-	Name = "客户端功能"
+	Name = "控制玩家(汉化👁️",
+	Callback = function()	
+	    loadstring(game:HttpGet("https://raw.githubusercontent.com/flyspeed7/XiaoLing-CODE.tk3usj449llspw1/main/%E7%8E%A9%E5%AE%B6%E6%8E%A7%E5%88%B6%20%E6%B1%89%E5%8C%96.txt"))()
+  	end
 })
 
+Tab:AddButton({
+	Name = "Acrylix（通用）",
+	Callback = function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/3dsonsuce/acrylix/main/Acrylix'))()
+    end
+})
+Tab:AddButton({ Name =  "人物旋转[能用了]", Callback = function()
+        local PlayerService = game:GetService("Players")--:GetPlayers()
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local plr = PlayerService.LocalPlayer
+local mouse = plr:GetMouse()
+local BodyThrust = nil
+local Dragging = {}
+
+local Suggestions = {
+    2298830673, 300, 365, --gamier (test game)
+    1537690962, 250, 350, --bee swarm sim
+    5580097107, 300, 400, --frappe
+    2202352383, 275, 350, --super power training sim
+    142823291, 350, 425,  --murder mystery 2
+    155615604, 273, 462,  --prison life
+    1990228024, 200, 235, --bloxton hotels
+    189707, 250, 325,     --natural disaster survival
+    230362888, 265, 415,  --the normal elevator       (may not work)
+    5293755937, 335, 435, --speedrun sim
+    537413528, 300, 350,  --build a boat              (may not work)
+    18540115, 300, 425,   --survive the disasters
+    2041312716, 350, 465  --Ragdoll engine
+}
+
+
+local version = "v1.0.4"
+local font = Enum.Font.FredokaOne
+
+local AxisPositionX = {
+	0.05, 
+	0.35,
+	0.65
+}
+
+local AxisPositionY = {
+	40, --edit fling speed
+	90, --toggle fling types (normal, qfling, serverkek)
+	140, --extra (respawn)
+	190, --edit gui settings (hotkey, theme)
+	240
+}
+
+local Fling = {
+	false, --toggle
+	"", --hotkey
+	300, --speed
+	false, --server
+	false --stop vertfling
+}
+
+
+--[[themes:]]--
+
+local Theme_JeffStandard = {
+	Color3.fromRGB(15, 25, 35),   
+	Color3.fromRGB(10, 20, 30),   
+	Color3.fromRGB(27, 42, 53),   
+	Color3.fromRGB(25, 35, 45),   
+	Color3.fromRGB(20, 30, 40),   
+	Color3.fromRGB(25, 65, 45),   
+	Color3.fromRGB(255, 255, 255),
+	Color3.fromRGB(245, 245, 255),
+	Color3.fromRGB(155, 155, 255) 
+}
+local Theme_Dark = {
+	Color3.fromRGB(25, 25, 25),   --Top bar
+	Color3.fromRGB(10, 10, 10),   --Background
+	Color3.fromRGB(40, 40, 40),   --Border color
+	Color3.fromRGB(35, 35, 35),   --Button background
+	Color3.fromRGB(20, 20, 20),   --Unused
+	Color3.fromRGB(25, 100, 45),  --Button highlight
+	Color3.fromRGB(255, 255, 255),--Text title
+	Color3.fromRGB(245, 245, 255),--Text generic
+	Color3.fromRGB(155, 155, 255) --Text highlight
+}
+local Theme_Steel = {
+	Color3.fromRGB(25, 25, 35),   --Top bar
+	Color3.fromRGB(10, 10, 20),   --Background
+	Color3.fromRGB(40, 40, 50),   --Border color
+	Color3.fromRGB(35, 35, 45),   --Button background
+	Color3.fromRGB(20, 20, 25),   --Unused
+	Color3.fromRGB(25, 100, 55),  --Button highlight
+	Color3.fromRGB(255, 255, 255),--Text title
+	Color3.fromRGB(245, 245, 255),--Text generic
+	Color3.fromRGB(155, 155, 255) --Text highlight
+}
+local Theme_Rust = {
+	Color3.fromRGB(45, 25, 25),   
+	Color3.fromRGB(30, 10, 10),   
+	Color3.fromRGB(60, 40, 40),   
+	Color3.fromRGB(55, 35, 35),   
+	Color3.fromRGB(40, 20, 20),   
+	Color3.fromRGB(45, 100, 45),  
+	Color3.fromRGB(255, 255, 255),
+	Color3.fromRGB(255, 245, 255),
+	Color3.fromRGB(175, 155, 255) 
+}
+local Theme_Violet = {
+	Color3.fromRGB(35, 25, 45),   --Top bar
+	Color3.fromRGB(20, 10, 30),   --Background
+	Color3.fromRGB(50, 40, 60),   --Border color
+	Color3.fromRGB(45, 35, 55),   --Button background
+	Color3.fromRGB(30, 20, 40),   --Unused
+	Color3.fromRGB(35, 100, 65),  --Button highlight
+	Color3.fromRGB(255, 255, 255),--Text title
+	Color3.fromRGB(245, 245, 255),--Text generic
+	Color3.fromRGB(155, 155, 255) --Text highlight
+}
+local Theme_Space = {
+	Color3.fromRGB(10, 10, 10),   --Top bar
+	Color3.fromRGB(0, 0, 0),   --Background
+	Color3.fromRGB(20, 20, 20),   --Border color
+	Color3.fromRGB(15, 15, 15),   --Button background
+	Color3.fromRGB(5, 5, 5),   --Unused
+	Color3.fromRGB(20, 25, 50),  --Button highlight
+	Color3.fromRGB(255, 255, 255),--Text title
+	Color3.fromRGB(245, 245, 255),--Text generic
+	Color3.fromRGB(155, 155, 255) --Text highlight
+}
+local Theme_SynX = {
+	Color3.fromRGB(75, 75, 75),   --Top bar
+	Color3.fromRGB(45, 45, 45),   --Background
+	Color3.fromRGB(45, 45, 45),   --Border color
+	Color3.fromRGB(75, 75, 75),   --Button background
+	Color3.fromRGB(0, 0, 5),   --Unused
+	Color3.fromRGB(150, 75, 20),  --Button highlight
+	Color3.fromRGB(255, 255, 255),--Text title
+	Color3.fromRGB(245, 245, 255),--Text generic
+	Color3.fromRGB(155, 155, 255) --Text highlight
+}
+
+
+local SelectedTheme = math.random(1,6)
+if SelectedTheme == 1 then
+    SelectedTheme = Theme_Steel
+elseif SelectedTheme == 2 then
+    SelectedTheme = Theme_Dark
+elseif SelectedTheme == 3 then
+    SelectedTheme = Theme_Rust
+elseif SelectedTheme == 4 then
+    SelectedTheme = Theme_Violet
+elseif SelectedTheme == 5 then
+    SelectedTheme = Theme_Space
+elseif SelectedTheme == 6 then
+    if syn then
+        SelectedTheme = Theme_SynX
+    else
+        SelectedTheme = Theme_JeffStandard
+    end
+end
+
+
+--[[instances:]]--
+local ScreenGui = Instance.new("ScreenGui")
+local TitleBar = Instance.new("Frame")
+local Shadow = Instance.new("Frame")
+local Menu = Instance.new("ScrollingFrame")
+
+local TitleText = Instance.new("TextLabel")
+local TitleTextShadow = Instance.new("TextLabel")
+local CreditText = Instance.new("TextLabel")
+local SuggestionText = Instance.new("TextLabel")
+
+local SpeedBox = Instance.new("TextBox")
+local Hotkey = Instance.new("TextBox")
+
+local SpeedUp = Instance.new("TextButton")
+local SpeedDown = Instance.new("TextButton")
+local ToggleFling = Instance.new("TextButton")
+local ToggleServerKill = Instance.new("TextButton")
+local NoVertGain = Instance.new("TextButton")
+local Respawn = Instance.new("TextButton")
+local CloseButton = Instance.new("TextButton")
+
+--local BodyThrust = Instance.new("BodyThrust")
+
+ScreenGui.Name = "JeffFling"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.Enabled = true
+
+TitleBar.Name = "Title Bar"
+TitleBar.Parent = ScreenGui
+TitleBar.BackgroundColor3 = SelectedTheme[1]
+TitleBar.BorderColor3 = SelectedTheme[3]
+TitleBar.Position = UDim2.new(-0.3, 0, 0.7, 0)
+TitleBar.Size = UDim2.new(0, 400, 0, 250)
+TitleBar.Draggable = true
+TitleBar.Active = true
+TitleBar.Selectable = true
+TitleBar.ZIndex = 100
+
+Shadow.Name = "Shadow"
+Shadow.Parent = TitleBar
+Shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Shadow.BackgroundTransparency = 0.5
+Shadow.BorderSizePixel = 0
+Shadow.Position = UDim2.new(0, 5, 0, 5)
+Shadow.Size = TitleBar.Size
+Shadow.ZIndex = 50
+
+Menu.Name = "Menu"
+Menu.Parent = TitleBar
+Menu.BackgroundColor3 = SelectedTheme[2]
+Menu.BorderColor3 = SelectedTheme[3]
+Menu.AnchorPoint = Vector2.new(0,0)
+Menu.Position = UDim2.new(0, 0, 0, 50)
+Menu.Size = UDim2.new(0, 400, 0, 200)
+Menu.CanvasSize = UDim2.new(0, TitleBar.Size.X, 0, 325)
+Menu.ScrollBarImageTransparency = 0.5
+Menu.ZIndex = 200
+
+TitleText.Name = "Title Text"
+TitleText.Parent = TitleBar
+TitleText.AnchorPoint = Vector2.new(0, 0)
+TitleText.Position = UDim2.new(0, 100, 0, 25)
+TitleText.Font = font
+TitleText.Text = "Fling GUI "..version
+TitleText.TextColor3 = SelectedTheme[8]
+TitleText.TextSize = 28
+TitleText.ZIndex = 300
+TitleText.BackgroundTransparency = 1
+
+TitleTextShadow.Name = "Shadow"
+TitleTextShadow.Parent = TitleText
+TitleTextShadow.Font = font
+TitleTextShadow.Text = "Fling GUI "..version
+TitleTextShadow.TextSize = 28
+TitleTextShadow.TextColor3 = Color3.fromRGB(0, 0, 0)
+TitleTextShadow.TextTransparency = 0.5
+TitleTextShadow.Position = UDim2.new(0, 5, 0, 5)
+TitleTextShadow.ZIndex = 250
+TitleTextShadow.BackgroundTransparency = 1
+
+SuggestionText.Name = "Suggestion Text"
+SuggestionText.Parent = Menu
+SuggestionText.Position = UDim2.new(0, 20, 0, 250)
+SuggestionText.Font = font
+SuggestionText.Text = "e"
+SuggestionText.TextColor3 = SelectedTheme[7]
+SuggestionText.TextSize = 24
+SuggestionText.TextXAlignment = Enum.TextXAlignment.Left
+SuggestionText.ZIndex = 300
+SuggestionText.BackgroundTransparency = 1
+
+CreditText.Name = "Credit Text"
+CreditText.Parent = Menu
+CreditText.Position = UDim2.new(0, 20, 0, 300)
+CreditText.Font = font
+CreditText.Text = "Made by topit"
+CreditText.TextColor3 = SelectedTheme[7]
+CreditText.TextSize = 20
+CreditText.TextXAlignment = Enum.TextXAlignment.Left
+CreditText.ZIndex = 300
+CreditText.BackgroundTransparency = 1
+
+SpeedBox.Name = "Speed setting"
+SpeedBox.Parent = Menu
+SpeedBox.BackgroundColor3 = SelectedTheme[4]
+SpeedBox.BorderColor3 = SelectedTheme[3]
+SpeedBox.TextColor3 = SelectedTheme[7]
+SpeedBox.Position = UDim2.new(AxisPositionX[1], 0, 0, AxisPositionY[1])
+SpeedBox.Size = UDim2.new(0, 100, 0, 25)
+SpeedBox.Font = Enum.Font.FredokaOne
+SpeedBox.Text = "Speed: "..Fling[3]
+SpeedBox.PlaceholderText = "Enter custom speed"
+SpeedBox.TextScaled = true
+SpeedBox.ZIndex = 300
+
+Hotkey.Name = "Custom Hotkey"
+Hotkey.Parent = Menu
+Hotkey.BackgroundColor3 = SelectedTheme[4]
+Hotkey.BorderColor3 = SelectedTheme[3]
+Hotkey.TextColor3 = SelectedTheme[7]
+Hotkey.Position = UDim2.new(AxisPositionX[2], 0, 0, AxisPositionY[3])
+Hotkey.Size = UDim2.new(0, 100, 0, 25)
+Hotkey.Font = Enum.Font.FredokaOne
+Hotkey.Text = "Enter new hotkey"
+Hotkey.PlaceholderText = "Enter new hotkey"
+Hotkey.TextScaled = true
+Hotkey.ZIndex = 300
+
+SpeedUp.Name = "Speed Up"
+SpeedUp.Parent = Menu
+SpeedUp.BackgroundColor3 = SelectedTheme[4]
+SpeedUp.BorderColor3 = SelectedTheme[3]
+SpeedUp.TextColor3 = SelectedTheme[7]
+SpeedUp.Position = UDim2.new((AxisPositionX[2]), 0, 0, (AxisPositionY[1]))
+SpeedUp.Size = UDim2.new(0, 100, 0, 25)
+SpeedUp.Font = Enum.Font.FredokaOne
+SpeedUp.Text = "↑"
+SpeedUp.TextScaled = true
+SpeedUp.ZIndex = 300
+
+SpeedDown.Name = "Speed Down"
+SpeedDown.Parent = Menu
+SpeedDown.BackgroundColor3 = SelectedTheme[4]
+SpeedDown.BorderColor3 = SelectedTheme[3]
+SpeedDown.TextColor3 = SelectedTheme[7]
+SpeedDown.Position = UDim2.new((AxisPositionX[3]), 0, 0, (AxisPositionY[1]))
+SpeedDown.Size = UDim2.new(0, 100, 0, 25)
+SpeedDown.Font = Enum.Font.FredokaOne
+SpeedDown.Text = "↓"
+SpeedDown.TextScaled = true
+SpeedDown.ZIndex = 300
+
+ToggleFling.Name = "Fling toggle"
+ToggleFling.Parent = Menu
+ToggleFling.BackgroundColor3 = SelectedTheme[4]
+ToggleFling.BorderColor3 = SelectedTheme[3]
+ToggleFling.TextColor3 = SelectedTheme[7]
+ToggleFling.Position = UDim2.new((AxisPositionX[1]), 0, 0, (AxisPositionY[2]))
+ToggleFling.Size = UDim2.new(0, 100, 0, 25)
+ToggleFling.Font = Enum.Font.FredokaOne
+ToggleFling.Text = "Toggle fling"
+ToggleFling.TextScaled = true
+ToggleFling.ZIndex = 300
+
+Respawn.Name = "Respawn"
+Respawn.Parent = Menu
+Respawn.BackgroundColor3 = SelectedTheme[4]
+Respawn.BorderColor3 = SelectedTheme[3]
+Respawn.TextColor3 = SelectedTheme[7]
+Respawn.Position = UDim2.new((AxisPositionX[1]), 0, 0, (AxisPositionY[3]))
+Respawn.Size = UDim2.new(0, 100, 0, 25)
+Respawn.Font = Enum.Font.FredokaOne
+Respawn.Text = "Fix player"
+Respawn.TextScaled = true
+Respawn.ZIndex = 300
+
+NoVertGain.Name = "NoVertGain"
+NoVertGain.Parent = Menu
+NoVertGain.BackgroundColor3 = SelectedTheme[4]
+NoVertGain.BorderColor3 = SelectedTheme[3]
+NoVertGain.TextColor3 = SelectedTheme[7]
+NoVertGain.Position = UDim2.new((AxisPositionX[2]), 0, 0, (AxisPositionY[2]))
+NoVertGain.Size = UDim2.new(0, 100, 0, 25)
+NoVertGain.Font = Enum.Font.FredokaOne
+NoVertGain.Text = "Soften vertical fling"
+NoVertGain.TextScaled = true
+NoVertGain.ZIndex = 300
+
+ToggleServerKill.Name = ""
+ToggleServerKill.Parent = Menu
+ToggleServerKill.BackgroundColor3 = SelectedTheme[4]
+ToggleServerKill.BorderColor3 = SelectedTheme[3]
+ToggleServerKill.TextColor3 = SelectedTheme[7]
+ToggleServerKill.Position = UDim2.new((AxisPositionX[3]), 0, 0, (AxisPositionY[2]))
+ToggleServerKill.Size = UDim2.new(0, 100, 0, 25)
+ToggleServerKill.Font = Enum.Font.FredokaOne
+ToggleServerKill.Text = "Kek server"
+ToggleServerKill.TextScaled = true
+ToggleServerKill.ZIndex = 300
+
+CloseButton.Name = "Close Button"
+CloseButton.AnchorPoint = Vector2.new(1, 0)
+CloseButton.Parent = TitleBar
+CloseButton.BackgroundColor3 = SelectedTheme[4]
+CloseButton.BorderColor3 = SelectedTheme[3]
+CloseButton.TextColor3 = SelectedTheme[7]
+CloseButton.Position = UDim2.new(1, 0, 0, 0)
+CloseButton.Size = UDim2.new(0, 25, 0, 25)
+CloseButton.Font = Enum.Font.FredokaOne
+CloseButton.Text = "X"
+CloseButton.ZIndex = 300
+CloseButton.TextSize = 14
+
+--BodyThrust.Name = "Power"
+--BodyThrust.Parent = plr.Character.Torso
+--BodyThrust.Force = Vector3.new(0, 0, 0)
+--BodyThrust.Location = Vector3.new(0, 0, 0)
+
+--[[functions:]]--
+local function DisplayText(title, text, duration)
+	duration = duration or 1
+	game.StarterGui:SetCore("SendNotification", 
+		{
+			Title = title;
+			Text = text;
+			Icon = "";
+			Duration = duration;
+		}
+	)
+end
+
+local function DisplaySuggestion()
+    for i,v in pairs(Suggestions) do
+        if v >= 9999 and v == game.PlaceId then
+            DisplayText("Detected current game!","Suggested speed: "..Suggestions[i+1].." - "..Suggestions[i+2])
+            SuggestionText.Text = "Suggested speed: "..Suggestions[i+1].." - "..Suggestions[i+2]
+        end
+    end
+    if SuggestionText.Text == "e" then
+        SuggestionText.Text = "No suggestion for this game"
+    end
+end
+
+
+local function GetRigType()
+    
+    if plr.Character.Humanoid.RigType == Enum.HumanoidRigType.R15 then
+        return Enum.HumanoidRigType.R15
+    elseif plr.Character.Humanoid.RigType == Enum.HumanoidRigType.R6 then
+        return Enum.HumanoidRigType.R6
+    else
+        return nil
+    end
+end
+
+local function GetDeadState(player)
+    if player.Character.Humanoid:GetState() == Enum.HumanoidStateType.Dead then
+        return true
+    else
+        return false
+    end
+end
+
+
+local function EnableNoClip()
+    
+    if GetDeadState(plr) == false then
+        if GetRigType() == Enum.HumanoidRigType.R6 then
+            plr.Character:FindFirstChild("Torso").CanCollide            = false
+            plr.Character:FindFirstChild("Head").CanCollide             = false
+            plr.Character:FindFirstChild("HumanoidRootPart").CanCollide = false
+        elseif GetRigType() == Enum.HumanoidRigType.R15 then
+            plr.Character:FindFirstChild("UpperTorso").CanCollide       = false
+            plr.Character:FindFirstChild("LowerTorso").CanCollide       = false
+            plr.Character:FindFirstChild("Head").CanCollide             = false
+            plr.Character:FindFirstChild("HumanoidRootPart").CanCollide = false
+        end
+    end
+end
+
+local function DisableNoClip()
+    
+    if GetDeadState(plr) == false then
+        if GetRigType() == Enum.HumanoidRigType.R6 then
+            plr.Character:FindFirstChild("Torso").CanCollide            = true
+            plr.Character:FindFirstChild("Head").CanCollide             = true
+            plr.Character:FindFirstChild("HumanoidRootPart").CanCollide = true
+        elseif GetRigType() == Enum.HumanoidRigType.R15 then
+            plr.Character:FindFirstChild("UpperTorso").CanCollide       = true
+            plr.Character:FindFirstChild("LowerTorso").CanCollide       = true
+            plr.Character:FindFirstChild("Head").CanCollide             = true
+            plr.Character:FindFirstChild("HumanoidRootPart").CanCollide = true
+        end
+    end
+end
+
+local function OpenObject(object)
+    local OpenAnim = TweenService:Create(
+    	object,
+    	TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), --Enum.EasingStyle.Linear, Enum.EasingDirection.In
+    	{Size = UDim2.new(0, 110, 0, 35), BackgroundColor3 = SelectedTheme[6] }
+    )
+    
+    OpenAnim:Play()
+end
+
+local function CloseObject(object)
+    local CloseAnim = TweenService:Create(
+    	object,
+    	TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out),
+    	{Size = UDim2.new(0, 100, 0, 25), BackgroundColor3 = SelectedTheme[4] }
+    )
+    
+    CloseAnim:Play()
+end
+
+    
+local function TToggleFling()
+    Fling[1] = not Fling[1]
+    if Fling[1] then
+        OpenObject(ToggleFling)
+        
+        BodyThrust = Instance.new("BodyThrust")
+        if GetRigType() == Enum.HumanoidRigType.R6 then
+            BodyThrust.Parent = plr.Character.Torso
+        elseif GetRigType() == Enum.HumanoidRigType.R15 then
+            BodyThrust.Parent = plr.Character.UpperTorso
+        end
+        
+        EnableNoClip()
+        BodyThrust.Force = Vector3.new(Fling[3], 0, 0)
+        BodyThrust.Location = Vector3.new(0, 0, Fling[3])
+        
+        
+        print("Enabled fling")
+    else
+        CloseObject(ToggleFling)
+        
+        DisableNoClip()
+        for i, v in pairs(plr.Character:GetDescendants()) do
+            if v:IsA("BasePart") then
+            v.Velocity, v.RotVelocity = Vector3.new(0, 0, 0), Vector3.new(0, 0, 0)
+            end
+        end
+        BodyThrust:Destroy()
+        
+        print("Disabled fling")
+        
+    end
+end
+
+local function GetIfPlayerInGame(PlayerToFind)
+    if PlayerService:FindFirstChild(PlayerToFind) then
+        return true
+    else
+        return false
+    end
+end
+
+local function ServerKek()
+    local TargetList = {}
+    local index = 1
+    local playercount = 0
+    
+    if Fling[1] == true then
+        TToggleFling()
+    end
+    
+    for i,v in pairs(PlayerService:GetPlayers()) do
+        if v ~= plr then
+            playercount = playercount + 1
+            table.insert(TargetList, v)
+        end
+    end
+    
+    for i,v in pairs(TargetList) do
+       print(i,v.Name) 
+    end
+    
+    
+    while Fling[4] do
+        if index > playercount then
+            CloseObject(ToggleServerKill)
+            DisplayText("Disabled ServerKek","Finished")
+            Fling[4] = false
+            break
+        else
+            local InGame = GetIfPlayerInGame(TargetList[index].Name)
+            local Dead = GetDeadState(TargetList[index])
+            if InGame == true and Dead == false then
+                plr.Character.HumanoidRootPart.CFrame = TargetList[index].Character.HumanoidRootPart.CFrame --tp to them
+                
+                TToggleFling() --enable fling
+                
+                for i = 0,2,1 do
+                    plr.Character.HumanoidRootPart.CFrame = TargetList[index].Character.HumanoidRootPart.CFrame
+                    wait(0.15)
+                end
+                
+                TToggleFling() --disable fling
+                
+                wait(0.1) --wait until disabled
+                
+                if plr.Character.Humanoid:GetState() == Enum.HumanoidStateType.Seated then --check if seated
+                    plr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Running) --get out if you are
+                end
+                
+                index = index + 1 --go to next victim
+                
+                if Fling[4] == false then
+                    break
+                end
+            else
+                index = index + 1
+            end
+        end
+    end
+end
+
+--[[events:]]--
+CloseButton.MouseButton1Down:Connect(function()
+    TitleBar:TweenPosition(UDim2.new(-0.3, 0, 0.7, 0), Enum.EasingDirection.In, Enum.EasingStyle.Back, 0.75)
+	DisplayText("Goodbye!","")
+	wait(0.8)
+	ScreenGui.Enabled = false
+	ScreenGui:Destroy()
+	script:Destroy()
+end)
+
+SpeedUp.MouseButton1Down:Connect(function()
+    Fling[3] = Fling[3] + 50
+    SpeedBox.Text = "Speed: "..Fling[3]
+    
+    if Fling[1] then
+        BodyThrust.Force = Vector3.new(Fling[3], 0, 0)
+        BodyThrust.Location = Vector3.new(0, 0, Fling[3])
+    end
+end)
+
+SpeedDown.MouseButton1Down:Connect(function()
+    Fling[3] = Fling[3] - 50
+    SpeedBox.Text = "Speed: "..Fling[3]
+    
+    if Fling[1] then
+        BodyThrust.Force = Vector3.new(Fling[3], 0, 0)
+        BodyThrust.Location = Vector3.new(0, 0, Fling[3])
+    end
+end)
+
+SpeedBox.FocusLost:Connect(function()
+    Fling[3] = SpeedBox.Text:gsub("%D",""):sub(0,5)
+    if Fling[3] ~= nil then
+        SpeedBox.Text = "Speed: "..Fling[3]
+        if Fling[1] then
+            BodyThrust.Force = Vector3.new(Fling[3], 0, 0)
+            BodyThrust.Location = Vector3.new(0, 0, Fling[3])
+        end
+    end
+    
+end)
+
+Hotkey.FocusLost:Connect(function()
+    Fling[2] = Hotkey.Text:split(" ")[1]:sub(1,1)
+    if Fling[2] ~= nil then
+        Hotkey.Text = "Hotkey: "..Fling[2]
+    end
+end)
+
+
+ToggleFling.MouseButton1Down:Connect(function()
+    TToggleFling()
+end)
+
+Respawn.MouseButton1Down:Connect(function()
+        
+    if Fling[1] then --disable fling if its enabled
+        TToggleFling()
+    end
+    
+    wait(0.4) --wait for fling to stop
+    
+    for i=0,10,1 do
+        plr.Character.Humanoid:ChangeState(2) --make player recover from falling
+    end
+    
+    for i, v in pairs(plr.Character:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.Velocity, v.RotVelocity = Vector3.new(0, 0, 0), Vector3.new(0, 0, 0)
+        end
+    end
+end)
+
+ToggleServerKill.MouseButton1Down:Connect(function()
+    Fling[4] = not Fling[4]
+    if Fling[4] then
+        OpenObject(ToggleServerKill)
+        DisplayText("Enabled ServerKek","")
+        ServerKek()
+    else
+        CloseObject(ToggleServerKill)
+        DisplayText("Disabled ServerKek","There might be a delay!")
+    end
+    
+end)
+
+NoVertGain.MouseButton1Down:Connect(function()
+    Fling[5] = not Fling[5]
+    if Fling[5] then
+        OpenObject(NoVertGain)
+    else
+        CloseObject(NoVertGain)
+    end
+end)
+
+RunService.Stepped:Connect(function()
+    if Fling[1] then
+        EnableNoClip()
+    elseif Fling[5] then
+        for i, v in pairs(plr.Character:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.Velocity, v.RotVelocity = Vector3.new(0, 0, 0), Vector3.new(0, 0, 0)
+            end
+        end
+    end
+end)
+
+TitleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        Dragging[1] = true
+        Dragging[2] = input.Position
+        Dragging[3] = TitleBar.Position
+    end
+end)
+
+TitleBar.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        Dragging[1] = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        if Dragging[1] then
+            local delta = input.Position - Dragging[2]
+            TitleBar:TweenPosition(UDim2.new(Dragging[3].X.Scale, Dragging[3].X.Offset + delta.X, Dragging[3].Y.Scale, Dragging[3].Y.Offset + delta.Y), Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.035)
+            wait()
+        end
+    end
+end)
+
+mouse.KeyDown:Connect(function(key)
+    if key == Fling[2] then
+        TToggleFling()
+    end
+end)
+
+
+DisplaySuggestion()
+TitleBar:TweenPosition(UDim2.new(0.25, 0, 0.7, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Back, 0.75)
+DisplayText("Loaded Fling GUI "..version, "Made by Swervo#0462", 3)
+return nil
+end})
+
+
+local Section = Tab:AddSection({
+	Name = "飞行类"
+})
+Tab:AddButton({
+    Name = "飞行V3",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Qrto1/fly/main/universal", true))()
+    end    
+})
 Tab:AddButton({
   Name = "飞行V3GUI",
   Callback = function ()
@@ -1464,22 +2155,708 @@ closebutton.Position = UDim2.new(0, 0, -1, 27)
 end)
   end
 })
-
 Tab:AddButton({
-	Name = "控制玩家(汉化👁️",
-	Callback = function()	
-	    loadstring(game:HttpGet("https://raw.githubusercontent.com/flyspeed7/XiaoLing-CODE.tk3usj449llspw1/main/%E7%8E%A9%E5%AE%B6%E6%8E%A7%E5%88%B6%20%E6%B1%89%E5%8C%96.txt"))()
-  	end
-})
+    Name = "飞车",
+    Callback = function()
+--MADE BY WARRIOR ROBERR
 
-Tab:AddButton({
-	Name = "Acrylix（通用）",
-	Callback = function()
-        loadstring(game:HttpGet('https://raw.githubusercontent.com/3dsonsuce/acrylix/main/Acrylix'))()
-    end
+--BACKGROUND BY NOX
+
+-- Version: 3.2
+
+-- Instances:
+
+local Flymguiv2 = Instance.new("ScreenGui")
+
+local Drag = Instance.new("Frame")
+
+local FlyFrame = Instance.new("Frame")
+
+local ddnsfbfwewefe = Instance.new("TextButton")
+
+local Speed = Instance.new("TextBox")
+
+local Fly = Instance.new("TextButton")
+
+local Speeed = Instance.new("TextLabel")
+
+local Stat = Instance.new("TextLabel")
+
+local Stat2 = Instance.new("TextLabel")
+
+local Unfly = Instance.new("TextButton")
+
+local Vfly = Instance.new("TextLabel")
+
+local Close = Instance.new("TextButton")
+
+local Minimize = Instance.new("TextButton")
+
+local Flyon = Instance.new("Frame")
+
+local W = Instance.new("TextButton")
+
+local S = Instance.new("TextButton")
+
+--Properties:
+
+Flymguiv2.Name = "Flym gui v2"
+
+Flymguiv2.Parent = game.CoreGui
+
+Flymguiv2.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+Drag.Name = "Drag"
+
+Drag.Parent = Flymguiv2
+
+Drag.Active = true
+
+Drag.BackgroundColor3 = Color3.fromRGB(138,43,226)
+
+Drag.BorderSizePixel = 0
+
+Drag.Draggable = true
+
+Drag.Position = UDim2.new(0.482438415, 0, 0.454874992, 0)
+
+Drag.Size = UDim2.new(0, 237, 0, 27)
+
+FlyFrame.Name = "FlyFrame"
+
+FlyFrame.Parent = Drag
+
+FlyFrame.BackgroundColor3 = Color3.fromRGB(147,112,219)
+
+FlyFrame.BorderSizePixel = 0
+
+FlyFrame.Draggable = true
+
+FlyFrame.Position = UDim2.new(-0.00200000009, 0, 0.989000022, 0)
+
+FlyFrame.Size = UDim2.new(0, 237, 0, 139)
+
+ddnsfbfwewefe.Name = "ddnsfbfwewefe"
+
+ddnsfbfwewefe.Parent = FlyFrame
+
+ddnsfbfwewefe.BackgroundColor3 = Color3.fromRGB(138,43,226)
+
+ddnsfbfwewefe.BorderSizePixel = 0
+
+ddnsfbfwewefe.Position = UDim2.new(-0.000210968778, 0, -0.00395679474, 0)
+
+ddnsfbfwewefe.Size = UDim2.new(0, 237, 0, 27)
+
+ddnsfbfwewefe.Font = Enum.Font.SourceSans
+
+ddnsfbfwewefe.Text = "nox🐙"
+
+ddnsfbfwewefe.TextColor3 = Color3.fromRGB(0,0,0)
+
+ddnsfbfwewefe.TextScaled = true
+
+ddnsfbfwewefe.TextSize = 14.000
+
+ddnsfbfwewefe.TextWrapped = true
+
+Speed.Name = "Speed"
+
+Speed.Parent = FlyFrame
+
+Speed.BackgroundColor3 = Color3.fromRGB(138,43,226)
+
+Speed.BorderColor3 = Color3.fromRGB(0, 0, 191)
+
+Speed.BorderSizePixel = 0
+
+Speed.Position = UDim2.new(0.445025861, 0, 0.402877688, 0)
+
+Speed.Size = UDim2.new(0, 111, 0, 33)
+
+Speed.Font = Enum.Font.SourceSans
+
+Speed.PlaceholderColor3 = Color3.fromRGB(255, 255, 255)
+
+Speed.Text = "50"
+
+Speed.TextColor3 = Color3.fromRGB(0,0,0)
+
+Speed.TextScaled = true
+
+Speed.TextSize = 14.000
+
+Speed.TextWrapped = true
+
+Fly.Name = "Fly"
+
+Fly.Parent = FlyFrame
+
+Fly.BackgroundColor3 = Color3.fromRGB(138,43,226)
+
+Fly.BorderSizePixel = 0
+
+Fly.Position = UDim2.new(0.0759493634, 0, 0.705797076, 0)
+
+Fly.Size = UDim2.new(0, 199, 0, 32)
+
+Fly.Font = Enum.Font.SourceSans
+
+Fly.Text = "Enable"
+
+Fly.TextColor3 = Color3.fromRGB(0,0,0)
+
+Fly.TextScaled = true
+
+Fly.TextSize = 14.000
+
+Fly.TextWrapped = true
+
+Fly.MouseButton1Click:Connect(function()
+
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart	Fly.Visible = false
+
+	Stat2.Text = "On"
+
+	Stat2.TextColor3 = Color3.fromRGB(0, 255, 0)
+
+	Unfly.Visible = true
+
+	Flyon.Visible = true
+
+	local BV = Instance.new("BodyVelocity",HumanoidRP)
+
+	local BG = Instance.new("BodyGyro",HumanoidRP)
+
+	BV.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+
+	game:GetService('RunService').RenderStepped:connect(function()
+
+	BG.MaxTorque = Vector3.new(math.huge,math.huge,math.huge)
+
+	BG.D = 5000
+
+	BG.P = 100000
+
+	BG.CFrame = game.Workspace.CurrentCamera.CFrame
+
+	end)
+
+end)
+
+Speeed.Name = "Speeed"
+
+Speeed.Parent = FlyFrame
+
+Speeed.BackgroundColor3 = Color3.fromRGB(138,43,226)
+
+Speeed.BorderSizePixel = 0
+
+Speeed.Position = UDim2.new(0.0759493634, 0, 0.402877688, 0)
+
+Speeed.Size = UDim2.new(0, 87, 0, 32)
+
+Speeed.ZIndex = 0
+
+Speeed.Font = Enum.Font.SourceSans
+
+Speeed.Text = "Speed:"
+
+Speeed.TextColor3 = Color3.fromRGB(0,0,0)
+
+Speeed.TextScaled = true
+
+Speeed.TextSize = 14.000
+
+Speeed.TextWrapped = true
+
+Stat.Name = "Stat"
+
+Stat.Parent = FlyFrame
+
+Stat.BackgroundColor3 = Color3.fromRGB(138,43,226)
+
+Stat.BorderSizePixel = 0
+
+Stat.Position = UDim2.new(0.299983799, 0, 0.239817441, 0)
+
+Stat.Size = UDim2.new(0, 85, 0, 15)
+
+Stat.Font = Enum.Font.SourceSans
+
+Stat.Text = "Status:"
+
+Stat.TextColor3 = Color3.fromRGB(0,0,0)
+
+Stat.TextScaled = true
+
+Stat.TextSize = 14.000
+
+Stat.TextWrapped = true
+
+Stat2.Name = "Stat2"
+
+Stat2.Parent = FlyFrame
+
+Stat2.BackgroundColor3 = Color3.fromRGB(138,43,226)
+
+Stat2.BorderSizePixel = 0
+
+Stat2.Position = UDim2.new(0.546535194, 0, 0.239817441, 0)
+
+Stat2.Size = UDim2.new(0, 27, 0, 15)
+
+Stat2.Font = Enum.Font.SourceSans
+
+Stat2.Text = "Off"
+
+Stat2.TextColor3 = Color3.fromRGB(255, 0, 0)
+
+Stat2.TextScaled = true
+
+Stat2.TextSize = 14.000
+
+Stat2.TextWrapped = true
+
+Unfly.Name = "Unfly"
+
+Unfly.Parent = FlyFrame
+
+Unfly.BackgroundColor3 = Color3.fromRGB(138,43,226)
+
+Unfly.BorderSizePixel = 0
+
+Unfly.Position = UDim2.new(0.0759493634, 0, 0.705797076, 0)
+
+Unfly.Size = UDim2.new(0, 199, 0, 32)
+
+Unfly.Visible = false
+
+Unfly.Font = Enum.Font.SourceSans
+
+Unfly.Text = "Disable"
+
+Unfly.TextColor3 = Color3.fromRGB(0,0,0)
+
+Unfly.TextScaled = true
+
+Unfly.TextSize = 14.000
+
+Unfly.TextWrapped = true
+
+Unfly.MouseButton1Click:Connect(function()
+
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+
+	Fly.Visible = true
+
+	Stat2.Text = "Off"
+
+	Stat2.TextColor3 = Color3.fromRGB(255, 0, 0)
+
+	wait()
+
+	Unfly.Visible = false
+
+	Flyon.Visible = false
+
+	HumanoidRP:FindFirstChildOfClass("BodyVelocity"):Destroy()
+
+	HumanoidRP:FindFirstChildOfClass("BodyGyro"):Destroy()
+
+end)
+
+Vfly.Name = "Vfly"
+
+Vfly.Parent = Drag
+
+Vfly.BackgroundColor3 = Color3.fromRGB(138,43,226)
+
+Vfly.BorderSizePixel = 0
+
+Vfly.Size = UDim2.new(0, 57, 0, 27)
+
+Vfly.Font = Enum.Font.SourceSans
+
+Vfly.Text = "VFly"
+
+Vfly.TextColor3 = Color3.fromRGB(0,0,0)
+
+Vfly.TextScaled = true
+
+Vfly.TextSize = 14.000
+
+Vfly.TextWrapped = true
+
+Close.Name = "Close"
+
+Close.Parent = Drag
+
+Close.BackgroundColor3 = Color3.fromRGB(138,43,226)
+
+Close.BorderSizePixel = 0
+
+Close.Position = UDim2.new(0.875, 0, 0, 0)
+
+Close.Size = UDim2.new(0, 27, 0, 27)
+
+Close.Font = Enum.Font.SourceSans
+
+Close.Text = "X"
+
+Close.TextColor3 = Color3.fromRGB(0,0,0)
+
+Close.TextScaled = true
+
+Close.TextSize = 14.000
+
+Close.TextWrapped = true
+
+Close.MouseButton1Click:Connect(function()
+
+	Flymguiv2:Destroy()
+
+end)
+
+Minimize.Name = "Minimize"
+
+Minimize.Parent = Drag
+
+Minimize.BackgroundColor3 = Color3.fromRGB(138,43,226)
+
+Minimize.BorderSizePixel = 0
+
+Minimize.Position = UDim2.new(0.75, 0, 0, 0)
+
+Minimize.Size = UDim2.new(0, 27, 0, 27)
+
+Minimize.Font = Enum.Font.SourceSans
+
+Minimize.Text = "-"
+
+Minimize.TextColor3 = Color3.fromRGB(0,0,0)
+
+Minimize.TextScaled = true
+
+Minimize.TextSize = 14.000
+
+Minimize.TextWrapped = true
+
+function Mini()
+
+	if Minimize.Text == "-" then
+
+		Minimize.Text = "+"
+
+		FlyFrame.Visible = false
+
+	elseif Minimize.Text == "+" then
+
+		Minimize.Text = "-"
+
+		FlyFrame.Visible = true
+
+	end
+
+end
+
+Minimize.MouseButton1Click:Connect(Mini)
+
+Flyon.Name = "Fly on"
+
+Flyon.Parent = Flymguiv2
+
+Flyon.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+
+Flyon.BorderSizePixel = 0
+
+Flyon.Position = UDim2.new(0.117647067, 0, 0.550284624, 0)
+
+Flyon.Size = UDim2.new(0.148000002, 0, 0.314999998, 0)
+
+Flyon.Visible = false
+
+Flyon.Active = true
+
+Flyon.Draggable = true
+
+W.Name = "W"
+
+W.Parent = Flyon
+
+W.BackgroundColor3 = Color3.fromRGB(138,43,226)
+
+W.BorderSizePixel = 0
+
+W.Position = UDim2.new(0.134719521, 0, 0.0152013302, 0)
+
+W.Size = UDim2.new(0.708999991, 0, 0.499000013, 0)
+
+W.Font = Enum.Font.SourceSans
+
+W.Text = "^"
+
+W.TextColor3 = Color3.fromRGB(0,0,0)
+
+W.TextScaled = true
+
+W.TextSize = 14.000
+
+W.TextWrapped = true
+
+W.TouchLongPress:Connect(function()
+
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * 0
+
+end)
+
+W.MouseButton1Click:Connect(function()
+
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * 0
+
+end)
+
+S.Name = "S"
+
+S.Parent = Flyon
+
+S.BackgroundColor3 = Color3.fromRGB(138,43,226)
+
+S.BorderSizePixel = 0
+
+S.Position = UDim2.new(0.134000003, 0, 0.479999989, 0)
+
+S.Rotation = 180.000
+
+S.Size = UDim2.new(0.708999991, 0, 0.499000013, 0)
+
+S.Font = Enum.Font.SourceSans
+
+S.Text = "^"
+
+S.TextColor3 = Color3.fromRGB(0,0,0)
+
+S.TextScaled = true
+
+S.TextSize = 14.000
+
+S.TextWrapped = true
+
+S.TouchLongPress:Connect(function()
+
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * 0
+
+end)
+
+S.MouseButton1Click:Connect(function()
+
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -Speed.Text
+
+	wait(.1)
+
+	HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * 0
+
+end)
+
+    end    
 })
 local Section = Tab:AddSection({
 	Name = "范围"
+})
+_G.Disabled = false
+Tab:AddToggle({
+	Name = "启用范围",
+	Default = false,
+	Callback = function(Value)
+        _G.Disabled = Value
+	end
+})
+Tab:AddSlider({
+	Name = "滑块选范围",
+	Min =  5,
+	Max = 200,
+	Default = 16,
+	Color = Color3.fromRGB(255,255,255),
+	Increment = 1,
+	ValueName = "数值",
+	Callback = function(Value)
+    		_G.HeadSize = Value
+			if _G.Disabled then
+			for i,v in next, game:GetService('Players'):GetPlayers() do
+				if v.Name ~= game:GetService('Players').LocalPlayer.Name then
+					pcall(function()
+						v.Character.HumanoidRootPart.Size = Vector3.new(_G.HeadSize,_G.HeadSize,_G.HeadSize)
+						v.Character.HumanoidRootPart.Transparency = 0.7
+						v.Character.HumanoidRootPart.BrickColor = BrickColor.new("Really black")
+						v.Character.HumanoidRootPart.Material = "Neon"
+						v.Character.HumanoidRootPart.CanCollide = false
+					end)
+				end
+			end
+		end
+	end    
 })
 Tab:AddButton({
   Name = "全游戏通用范围",
@@ -1642,100 +3019,24 @@ end
 Services.Players.PlayerAdded:Connect(PlayerAdded)
 end
 })
-local Section = Tab:AddSection({
-	Name = "其他功能"
+local Tab= Window:MakeTab({
+	Name = "开发工具",
+	Icon = "rbxassetid://7743866529",
+	PremiumOnly = false
 })
-Tab:AddButton({
-	Name = "通用ESP",
-	Callback = function()
-	loadstring(game:HttpGet('https://raw.githubusercontent.com/Lucasfin000/SpaceHub/main/UESP'))()
-	end
+local Section = Tab:AddSection({
+	Name = "开发"
 })
 
 Tab:AddButton({
-	Name = "电脑键盘",
+	Name = "电脑键盘[有时候能用到]",
 	Callback = function()
      loadstring(game:HttpGet("https://raw.githubusercontent.com/advxzivhsjjdhxhsidifvsh/mobkeyboard/main/main.txt", true))()
   	end    
 })
 
-
 Tab:AddButton({
-	Name = "甩飞别人",
-	Callback = function()
-        loadstring(game:HttpGet("https://pastebin.com/raw/GnvPVBEi"))()
-  	end    
-})
-
-Tab:AddButton({
-	Name = "转圈fling GUI",
-	Callback = function()
-        loadstring(game:HttpGet('https://pastebin.com/raw/r97d7dS0', true))()
-    end
-})
-
-Tab:AddButton({
-	Name = "跟踪玩家",
-	Callback = function()
-      	loadstring(game:HttpGet("https://pastebin.com/raw/F9PNLcXk"))()
-  	end
-})
-
-Tab:AddButton({
-	Name = "伪名说话",
-	Callback = function()
-        loadstring(game:HttpGet(('https://pastefy.ga/zCFEwaYq/raw'),true))()
-	end 
-})
-
-Tab:AddButton({
-	Name = "人物无敌",
-	Callback = function()
-        loadstring(game:HttpGet('https://pastebin.com/raw/H3RLCWWZ'))()
-	end    
-})
-
-Tab:AddButton({
-	Name = "无敌",
-	Callback = function()
-local lp = game:GetService "Players".LocalPlayer
-if lp.Character:FindFirstChild "Head" then
-    local char = lp.Character
-    char.Archivable = true
-    local new = char:Clone()
-    new.Parent = workspace
-    lp.Character = new
-    wait(2)
-    local oldhum = char:FindFirstChildWhichIsA "Humanoid"
-    local newhum = oldhum:Clone()
-    newhum.Parent = char
-    newhum.RequiresNeck = false
-    oldhum.Parent = nil
-    wait(2)
-    lp.Character = char
-    new:Destroy()
-    wait(1)
-    newhum:GetPropertyChangedSignal("Health"):Connect(
-        function()
-            if newhum.Health <= 0 then
-                oldhum.Parent = lp.Character
-                wait(1)
-                oldhum:Destroy()
-            end
-        end)
-    workspace.CurrentCamera.CameraSubject = char
-    if char:FindFirstChild "Animate" then
-        char.Animate.Disabled = true
-        wait(.1)
-        char.Animate.Disabled = false
-    end
-    lp.Character:FindFirstChild "Head":Destroy()
-end
-end
-})
-
-Tab:AddButton({
-	Name = "点击传送工具",
+	Name = "点击传送工具 (传送到想去的位置然后用下面的工具箱的'复制当前位置')",
 	Callback = function()
         mouse = game.Players.LocalPlayer:GetMouse() 
         tool = Instance.new("Tool") 
@@ -1749,6 +3050,996 @@ Tab:AddButton({
 	end
 })
 
+Tab:AddButton({ Name =  "工具箱", Callback = function()
+       local Library = loadstring(game:HttpGetAsync("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau"))()
+local SaveManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/SaveManager.luau"))()
+local InterfaceManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/InterfaceManager.luau"))()
+
+local Window = Library:CreateWindow{
+    Title = "CHANGED 工具箱",
+    SubTitle = "使用的用户: " .. game.Players.LocalPlayer.Name,
+    TabWidth = 140,
+    Size = UDim2.fromOffset(520, 350),
+    Resize = true,
+    MinSize = Vector2.new(320, 220),
+    Acrylic = true,
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.LeftControl
+}
+
+local Tabs = {
+    Main = Window:CreateTab{ Title = "主要", Icon = "house" },
+    Calculator = Window:CreateTab{ Title = "计算器", Icon = "calculator" },
+    History = Window:CreateTab{ Title = "历史", Icon = "clock" },
+    Settings = Window:CreateTab{ Title = "设置", Icon = "settings" }
+}
+
+local player = game.Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local UIS = game:GetService("UserInputService")
+local TouchEnabled = UIS.TouchEnabled
+
+local selectionBox = Instance.new("SelectionBox")
+selectionBox.LineThickness = 0.05
+selectionBox.Color3 = Color3.fromRGB(255, 50, 50)
+selectionBox.Parent = workspace
+
+local guiStroke = Instance.new("UIStroke")
+guiStroke.Thickness = 3
+guiStroke.Color = Color3.fromRGB(50, 255, 255)
+guiStroke.Enabled = true
+
+local partsEspOn = false
+local guisEspOn = false
+local currentPart = nil
+local currentGui = nil
+local lastGui = nil
+
+local calcHistory = {}
+local lastCalcResult = ""
+local lastCalcExpr = ""
+
+local function copyToClipboard(text)
+    if setclipboard then
+        setclipboard(text)
+        Library:Notify{Title = "已复制", Content = text, Duration = 3}
+    else
+        Library:Notify{Title = "错误", Content = "开启开关后请等待10 秒!!!", Duration = 4}
+    end
+end
+
+local function getFullPath(inst)
+    local path = inst.Name
+    local parent = inst.Parent
+    while parent and parent ~= game do
+        path = parent.Name .. "." .. path
+        parent = parent.Parent
+    end
+    if parent == game then
+        path = "game." .. path
+    end
+    return path
+end
+
+local function generateCodeSnippet(obj)
+    if obj:IsA("GuiObject") then
+        return string.format(
+            [[local %s = Instance.new("%s")
+%s.Position = UDim2.new(%s, %s, %s, %s)
+%s.Size = UDim2.new(%s, %s, %s, %s)
+%s.BackgroundColor3 = Color3.new(%s, %s, %s)
+%s.Parent = game.Players.LocalPlayer.PlayerGui.%s]],
+            obj.Name, obj.ClassName,
+            obj.Name, obj.Position.X.Scale, obj.Position.X.Offset, obj.Position.Y.Scale, obj.Position.Y.Offset,
+            obj.Name, obj.Size.X.Scale, obj.Size.X.Offset, obj.Size.Y.Scale, obj.Size.Y.Offset,
+            obj.Name, obj.BackgroundColor3.R, obj.BackgroundColor3.G, obj.BackgroundColor3.B,
+            obj.Name, getFullPath(obj.Parent):gsub("Players%.%w+%.PlayerGui%.", "")
+        )
+    else
+        return string.format(
+            [[local %s = Instance.new("%s")
+%s.Position = Vector3.new(%s, %s, %s)
+%s.Size = Vector3.new(%s, %s, %s)
+%s.Material = Enum.Material.%s
+%s.Parent = game.%s]],
+            obj.Name, obj.ClassName,
+            obj.Name, obj.Position.X, obj.Position.Y, obj.Position.Z,
+            obj.Name, obj.Size.X, obj.Size.Y, obj.Size.Z,
+            obj.Name, obj.Material.Name,
+            obj.Name, getFullPath(obj.Parent):gsub("game%.", "")
+        )
+    end
+end
+
+local function showConfirm(obj)
+    local info
+    if obj:IsA("GuiObject") then
+        info = getFullPath(obj)
+    else
+        info = getFullPath(obj) .. "\nPosition: " .. tostring(obj.Position)
+    end
+    Window:Dialog{
+        Title = "要复制那一种??",
+        Content = info,
+        Buttons = {
+            {Title = "复制路径 (Dex 的路径)", Callback = function() copyToClipboard(info) end},
+            {Title = "复制脚本 (一键帮你做成脚本)", Callback = function() copyToClipboard(generateCodeSnippet(obj)) end},
+            {Title = "取消", Callback = function() end}
+        }
+    }
+end
+
+Tabs.Main:CreateToggle("PartsESPToggle", {
+    Title = "path查找器",
+    Description = "查找服务器东西(名称)",
+    Default = false
+}):OnChanged(function()
+    partsEspOn = Library.Options.PartsESPToggle.Value
+    if not partsEspOn then
+        currentPart = nil
+        selectionBox.Adornee = nil
+    end
+end)
+
+Tabs.Main:CreateToggle("GUIsESPToggle", {
+    Title = "屏幕SelectionUI查找器",
+    Description = "查找 GUI 和名字等...",
+    Default = false
+}):OnChanged(function()
+    guisEspOn = Library.Options.GUIsESPToggle.Value
+    if not guisEspOn then
+        if guiStroke.Parent then guiStroke.Parent = nil end
+        currentGui = nil
+        lastGui = nil
+    elseif lastGui then
+        guiStroke.Parent = lastGui
+    end
+end)
+
+Tabs.Main:CreateButton{
+    Title = "复制当前位置",
+    Description = "懂得都懂",
+    Callback = function()
+        local char = player.Character
+        if char and char.PrimaryPart then
+            copyToClipboard(tostring(char.PrimaryPart.Position))
+        else
+            Library:Notify{Title = "错误", Content = "等待加载完成", Duration = 3}
+        end
+    end
+}
+
+local function isGuiVisible(gui)
+    return gui:IsA("GuiObject") and gui.Visible
+end
+
+local lastGuiCheck = 0
+
+local function getInputPosition(input)
+    if TouchEnabled and input.UserInputType == Enum.UserInputType.Touch then
+        return input.Position
+    else
+        return Vector2.new(input.Position.X, input.Position.Y)
+    end
+end
+
+local function getTopGuiAtPosition(x, y)
+    local topGui, topZ = nil, -math.huge
+    local function scan(gui)
+        if gui:IsA("GuiObject") and gui.Visible then
+            local absPos, absSize = gui.AbsolutePosition, gui.AbsoluteSize
+            if x >= absPos.X and x <= absPos.X + absSize.X and
+               y >= absPos.Y and y <= absPos.Y + absSize.Y then
+                if gui.ZIndex >= topZ then
+                    topGui = gui
+                    topZ = gui.ZIndex
+                end
+            end
+        end
+        for _, child in ipairs(gui:GetChildren()) do
+            scan(child)
+        end
+    end
+    for _, screenGui in ipairs(player.PlayerGui:GetChildren()) do
+        if screenGui:IsA("ScreenGui") and screenGui.Enabled then
+            scan(screenGui)
+        end
+    end
+    return topGui
+end
+
+UIS.InputChanged:Connect(function(input, processed)
+    if processed or not camera or not player.Character or (not partsEspOn and not guisEspOn) then
+        selectionBox.Adornee = nil
+        if guiStroke.Parent then guiStroke.Parent = nil end
+        currentPart = nil
+        currentGui = nil
+        lastGui = nil
+        return
+    end
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        if tick() - lastGuiCheck < 0.05 then return end
+        lastGuiCheck = tick()
+        local mousePos = getInputPosition(input)
+        if partsEspOn then
+            local ray = camera:ScreenPointToRay(mousePos.X, mousePos.Y)
+            local params = RaycastParams.new()
+            params.FilterDescendantsInstances = {player.Character}
+            params.FilterType = Enum.RaycastFilterType.Blacklist
+            local result = workspace:Raycast(ray.Origin, ray.Direction * 1000, params)
+            if result and result.Instance and result.Instance:IsA("BasePart") then
+                if currentPart ~= result.Instance then
+                    currentPart = result.Instance
+                    selectionBox.Adornee = currentPart
+                end
+            else
+                currentPart = nil
+                selectionBox.Adornee = nil
+            end
+        else
+            currentPart = nil
+            selectionBox.Adornee = nil
+        end
+        if guisEspOn then
+            local guiObj, highestZ = nil, -math.huge
+            for _, screenGui in pairs(player.PlayerGui:GetChildren()) do
+                if screenGui:IsA("ScreenGui") and screenGui.Enabled then
+                    for _, gui in pairs(screenGui:GetDescendants()) do
+                        if isGuiVisible(gui) then
+                            local absPos, absSize = gui.AbsolutePosition, gui.AbsoluteSize
+                            if mousePos.X >= absPos.X and mousePos.X <= absPos.X + absSize.X and
+                               mousePos.Y >= absPos.Y and mousePos.Y <= absPos.Y + absSize.Y then
+                                if gui.ZIndex > highestZ then
+                                    guiObj = gui
+                                    highestZ = gui.ZIndex
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            if guiObj then
+                if lastGui ~= guiObj then
+                    if guiStroke.Parent then guiStroke.Parent = nil end
+                    guiStroke.Parent = guiObj
+                    lastGui = guiObj
+                end
+                currentGui = guiObj
+            else
+                if guiStroke.Parent then guiStroke.Parent = nil end
+                currentGui = nil
+                lastGui = nil
+            end
+        else
+            if guiStroke.Parent then guiStroke.Parent = nil end
+            currentGui = nil
+            lastGui = nil
+        end
+    end
+end)
+
+UIS.InputEnded:Connect(function(input, processed)
+    if processed or (not partsEspOn and not guisEspOn) then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if currentGui and guisEspOn then
+            showConfirm(currentGui)
+        elseif currentPart and partsEspOn then
+            showConfirm(currentPart)
+        else
+            Library:Notify{Title = "错误", Content = "没有权限", Duration = 3}
+        end
+    end
+end)
+
+local function reparentVisuals()
+    selectionBox.Parent = workspace
+    if guiStroke.Parent and not guiStroke.Parent:IsDescendantOf(player.PlayerGui) then
+        guiStroke.Parent = nil
+        lastGui = nil
+        currentGui = nil
+    end
+end
+
+player.CharacterAdded:Connect(function()
+    currentPart = nil
+    currentGui = nil
+    selectionBox.Adornee = nil
+    if guiStroke.Parent then guiStroke.Parent = nil end
+    reparentVisuals()
+    task.wait(1)
+end)
+-----[[
+local calcResultParagraph = Tabs.Calculator:CreateParagraph("CalcResult", {
+    Title = "反 path by:yzc",
+    Content = "Raw: "
+})
+
+local calcInputBox = Tabs.Calculator:CreateInput("CalcInput", {
+    Title = "反 Path",
+    Placeholder = "e.g. 2+2*5",
+    Default = "",
+    Numeric = false,
+    Finished = false,
+    Callback = function(Value)
+        lastCalcExpr = Value
+        if Value == "" then
+            calcResultParagraph:SetValue("Result: (empty)")
+            return
+        end
+        local allowed = "0123456789.+-*/()%%^ "
+        for i = 1, #Value do
+            if not allowed:find(Value:sub(i,i), 1, true) then
+                calcResultParagraph:SetValue("Result: Invalid character")
+                return
+            end
+        end
+        local expr = Value:gsub("%%", "%%")
+        local f, err = loadstring("return " .. expr)
+        if not f then
+            calcResultParagraph:SetValue("Result: Syntax error")
+            return
+        end
+        local ok, res = pcall(f)
+        if not ok then
+            calcResultParagraph:SetValue("Result: Math error")
+            return
+        end
+        lastCalcResult = tostring(res)
+        calcResultParagraph:SetValue("Result: " .. lastCalcResult)
+    end
+})
+
+Tabs.Calculator:CreateButton{
+    Title = "复制Pah",
+    Description = "",
+    Callback = function()
+        if lastCalcResult and lastCalcResult ~= "" then
+            setclipboard(lastCalcResult)
+            Library:Notify{Title = "Copied", Content = lastCalcResult, Duration = 3}
+        end
+    end
+}
+
+Tabs.Calculator:CreateButton{
+    Title = "添加到历史",
+    Description = "",
+    Callback = function()
+        if lastCalcExpr ~= "" and lastCalcResult ~= "" then
+            table.insert(calcHistory, 1, lastCalcExpr .. " = " .. lastCalcResult)
+            if #calcHistory > 50 then table.remove(calcHistory) end
+            Library:Notify{Title = "Added", Content = "Added to history!", Duration = 2}
+        end
+    end
+}
+
+local historyParagraph = Tabs.History:CreateParagraph("CalcHistoryParagraph", {
+    Title = "历史记录:",
+    Content = ""
+})
+
+Tabs.Calculator:CreateButton{
+    Title = "显示历史记录",
+    Description = "",
+    Callback = function()
+        local text = ""
+        for i, v in ipairs(calcHistory) do
+            text = text .. v .. "\n"
+        end
+        historyParagraph:SetValue(text)
+        Window:SelectTab(Tabs.History)
+    end
+}
+
+Tabs.History:CreateButton{
+    Title = "删除历史",
+    Description = "",
+    Callback = function()
+        calcHistory = {}
+        historyParagraph:SetValue("")
+    end
+}
+
+SaveManager:SetLibrary(Library)
+InterfaceManager:SetLibrary(Library)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({})
+InterfaceManager:SetFolder("FluentScriptHub")
+SaveManager:SetFolder("FluentScriptHub/specific-game")
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+SaveManager:LoadAutoloadConfig()
+Window:SelectTab(1)
+wait(11.560463477051)
+Library:Notify{
+    Title = "CHANGED 工具箱",
+    Content = "脚本已完成加载",
+    Duration = 8
+} 
+end})
+Tab:AddButton({ Name =  "音乐嗅探(偶尔有用)", Callback = function()
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local SoundService = game:GetService("SoundService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "MusicHunterGUI"
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 500, 0, 450)
+mainFrame.Position = UDim2.new(0, 50, 0, 50)
+mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+mainFrame.BorderSizePixel = 0
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = mainFrame
+
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 40)
+header.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+header.BorderSizePixel = 0
+
+local headerCorner = Instance.new("UICorner")
+headerCorner.CornerRadius = UDim.new(0, 12)
+headerCorner.Parent = header
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(0.7, 0, 1, 0)
+title.Position = UDim2.new(0, 15, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "🎵 Music Detective"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextSize = 16
+title.Font = Enum.Font.GothamSemibold
+title.TextXAlignment = Enum.TextXAlignment.Left
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 40, 0, 40)
+closeBtn.Position = UDim2.new(1, -40, 0, 0)
+closeBtn.BackgroundTransparency = 1
+closeBtn.Text = "×"
+closeBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+closeBtn.TextSize = 24
+closeBtn.Font = Enum.Font.GothamBold
+
+local statusBar = Instance.new("Frame")
+statusBar.Size = UDim2.new(1, 0, 0, 30)
+statusBar.Position = UDim2.new(0, 0, 0, 40)
+statusBar.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+statusBar.BorderSizePixel = 0
+
+local statusText = Instance.new("TextLabel")
+statusText.Size = UDim2.new(1, -20, 1, 0)
+statusText.Position = UDim2.new(0, 10, 0, 0)
+statusText.BackgroundTransparency = 1
+statusText.Text = "🔍 Tracking music..."
+statusText.TextColor3 = Color3.fromRGB(200, 200, 100)
+statusText.TextSize = 12
+statusText.Font = Enum.Font.Gotham
+statusText.TextXAlignment = Enum.TextXAlignment.Left
+
+local content = Instance.new("ScrollingFrame")
+content.Size = UDim2.new(1, -20, 1, -110)
+content.Position = UDim2.new(0, 10, 0, 70)
+content.BackgroundTransparency = 1
+content.BorderSizePixel = 0
+content.ScrollBarThickness = 6
+content.ScrollBarImageColor3 = Color3.fromRGB(70, 70, 110)
+content.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+local musicListLayout = Instance.new("UIListLayout")
+musicListLayout.Padding = UDim.new(0, 8)
+musicListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+musicListLayout.Parent = content
+
+local controlPanel = Instance.new("Frame")
+controlPanel.Size = UDim2.new(1, 0, 0, 40)
+controlPanel.Position = UDim2.new(0, 0, 1, -40)
+controlPanel.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+controlPanel.BorderSizePixel = 0
+
+local refreshBtn = Instance.new("TextButton")
+refreshBtn.Size = UDim2.new(0, 140, 0, 30)
+refreshBtn.Position = UDim2.new(0.5, -70, 0.5, -15)
+refreshBtn.BackgroundColor3 = Color3.fromRGB(60, 120, 200)
+refreshBtn.Text = "🔄 Track Again"
+refreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+refreshBtn.TextSize = 12
+refreshBtn.Font = Enum.Font.GothamSemibold
+
+local btnCorner = Instance.new("UICorner")
+btnCorner.CornerRadius = UDim.new(0, 8)
+btnCorner.Parent = refreshBtn
+
+local hintLabel = Instance.new("TextLabel")
+hintLabel.Size = UDim2.new(1, -20, 0, 30)
+hintLabel.Position = UDim2.new(0, 10, 1, -75)
+hintLabel.BackgroundTransparency = 1
+hintLabel.Text = "💡 If you see a website instead of ID - this track is protected"
+hintLabel.TextColor3 = Color3.fromRGB(255, 150, 100)
+hintLabel.TextSize = 10
+hintLabel.Font = Enum.Font.Gotham
+hintLabel.TextXAlignment = Enum.TextXAlignment.Left
+hintLabel.TextWrapped = true
+
+header.Parent = mainFrame
+title.Parent = header
+closeBtn.Parent = header
+statusBar.Parent = mainFrame
+statusText.Parent = statusBar
+content.Parent = mainFrame
+controlPanel.Parent = mainFrame
+refreshBtn.Parent = controlPanel
+hintLabel.Parent = mainFrame
+mainFrame.Parent = screenGui
+screenGui.Parent = playerGui
+
+local function createCopyPopup(assetId, soundName, isUnavailable)
+	local popupGui = Instance.new("ScreenGui")
+	popupGui.Name = "CopyPopup"
+	popupGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+	popupGui.ResetOnSpawn = false
+	
+	local popupFrame = Instance.new("Frame")
+	popupFrame.Size = UDim2.new(0, 350, 0, isUnavailable and 180 or 200)
+	popupFrame.Position = UDim2.new(0.5, -175, 0.5, -100)
+	popupFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 35)
+	popupFrame.BorderSizePixel = 0
+	
+	local popupCorner = Instance.new("UICorner")
+	popupCorner.CornerRadius = UDim.new(0, 12)
+	popupCorner.Parent = popupFrame
+	
+	local popupHeader = Instance.new("TextLabel")
+	popupHeader.Size = UDim2.new(1, 0, 0, 50)
+	popupHeader.BackgroundTransparency = 1
+	popupHeader.Text = isUnavailable and "🛡️ Protected Track" or "🎯 Access Code"
+	popupHeader.TextColor3 = isUnavailable and Color3.fromRGB(255, 150, 100) or Color3.fromRGB(100, 200, 255)
+	popupHeader.TextSize = 18
+	popupHeader.Font = Enum.Font.GothamBold
+	popupHeader.Parent = popupFrame
+	
+	local nameLabel = Instance.new("TextLabel")
+	nameLabel.Size = UDim2.new(1, -20, 0, 30)
+	nameLabel.Position = UDim2.new(0, 10, 0, 50)
+	nameLabel.BackgroundTransparency = 1
+	nameLabel.Text = "🎼 " .. soundName
+	nameLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
+	nameLabel.TextSize = 14
+	nameLabel.Font = Enum.Font.Gotham
+	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+	nameLabel.Parent = popupFrame
+	
+	if isUnavailable then
+		local unavailableLabel = Instance.new("TextLabel")
+		unavailableLabel.Size = UDim2.new(1, -20, 0, 60)
+		unavailableLabel.Position = UDim2.new(0, 10, 0, 85)
+		unavailableLabel.BackgroundTransparency = 1
+		unavailableLabel.Text = "This track is protected!\n\nCannot extract digital fingerprint."
+		unavailableLabel.TextColor3 = Color3.fromRGB(255, 150, 100)
+		unavailableLabel.TextSize = 12
+		unavailableLabel.Font = Enum.Font.Gotham
+		unavailableLabel.TextXAlignment = Enum.TextXAlignment.Center
+		unavailableLabel.TextWrapped = true
+		unavailableLabel.Parent = popupFrame
+	else
+		local idTextBox = Instance.new("TextBox")
+		idTextBox.Size = UDim2.new(1, -20, 0, 40)
+		idTextBox.Position = UDim2.new(0, 10, 0, 85)
+		idTextBox.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+		idTextBox.TextColor3 = Color3.fromRGB(100, 200, 255)
+		idTextBox.Text = assetId
+		idTextBox.TextSize = 16
+		idTextBox.Font = Enum.Font.GothamBold
+		idTextBox.TextXAlignment = Enum.TextXAlignment.Center
+		idTextBox.ClearTextOnFocus = false
+		idTextBox.TextEditable = false
+		idTextBox.ClipsDescendants = true
+		
+		local textBoxCorner = Instance.new("UICorner")
+		textBoxCorner.CornerRadius = UDim.new(0, 8)
+		textBoxCorner.Parent = idTextBox
+		
+		local textBoxPadding = Instance.new("UIPadding")
+		textBoxPadding.PaddingLeft = UDim.new(0, 10)
+		textBoxPadding.PaddingRight = UDim.new(0, 10)
+		textBoxPadding.Parent = idTextBox
+		
+		local hintLabel = Instance.new("TextLabel")
+		hintLabel.Size = UDim2.new(1, -20, 0, 20)
+		hintLabel.Position = UDim2.new(0, 10, 0, 125)
+		hintLabel.BackgroundTransparency = 1
+		hintLabel.Text = "Select the code and press Ctrl+C to copy"
+		hintLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+		hintLabel.TextSize = 11
+		hintLabel.Font = Enum.Font.Gotham
+		hintLabel.Parent = popupFrame
+		
+		idTextBox.Parent = popupFrame
+		
+		spawn(function()
+			wait(0.1)
+			idTextBox:CaptureFocus()
+			idTextBox.SelectionStart = 1
+			idTextBox.CursorPosition = #assetId + 1
+		end)
+	end
+	
+	local confirmBtn = Instance.new("TextButton")
+	confirmBtn.Size = UDim2.new(0, 120, 0, 35)
+	confirmBtn.Position = UDim2.new(0.5, -60, 1, -45)
+	confirmBtn.BackgroundColor3 = isUnavailable and Color3.fromRGB(180, 100, 80) or Color3.fromRGB(80, 160, 80)
+	confirmBtn.Text = isUnavailable and "😞 Got it" or "✅ Copied!"
+	confirmBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	confirmBtn.TextSize = 14
+	confirmBtn.Font = Enum.Font.GothamSemibold
+	
+	local confirmCorner = Instance.new("UICorner")
+	confirmCorner.CornerRadius = UDim.new(0, 8)
+	confirmCorner.Parent = confirmBtn
+	
+	confirmBtn.Parent = popupFrame
+	popupFrame.Parent = popupGui
+	popupGui.Parent = playerGui
+	
+	confirmBtn.MouseButton1Click:Connect(function()
+		popupGui:Destroy()
+	end)
+	
+	local function closePopup(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			local mousePos = input.Position
+			local framePos = popupFrame.AbsolutePosition
+			local frameSize = popupFrame.AbsoluteSize
+			
+			if mousePos.X < framePos.X or mousePos.X > framePos.X + frameSize.X or
+			   mousePos.Y < framePos.Y or mousePos.Y > framePos.Y + frameSize.Y then
+				popupGui:Destroy()
+			end
+		end
+	end
+	
+	UserInputService.InputBegan:Connect(closePopup)
+	
+	return popupGui
+end
+
+local lastUpdate = 0
+local updateInterval = 10
+local isUpdating = false
+
+local function extractSoundInfo(soundId)
+	if not soundId or soundId == "" then
+		return "Unknown", "Unknown", true
+	end
+	
+	if string.find(soundId, "rbxassetid://") then
+		local id = string.gsub(soundId, "rbxassetid://", "")
+		return id, "Roblox Asset", false
+	elseif string.find(soundId, "http") then
+		local numbers = {}
+		for number in string.gmatch(soundId, "%d+") do
+			table.insert(numbers, number)
+		end
+		
+		if #numbers > 0 then
+			local lastNumber = numbers[#numbers]
+			return lastNumber, "Audio URL", false
+		else
+			local domain = string.match(soundId, "https?://([^/]+)") or "Unknown Site"
+			return domain, "Protected Audio", true
+		end
+	else
+		return soundId, "Raw ID", false
+	end
+end
+
+local function formatTime(seconds)
+	if seconds == 0 or seconds == math.huge then
+		return "∞"
+	end
+	local minutes = math.floor(seconds / 60)
+	local secs = math.floor(seconds % 60)
+	return string.format("%d:%02d", minutes, secs)
+end
+
+local function createSoundElement(soundData, index)
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.new(1, 0, 0, 120)
+	frame.BackgroundColor3 = soundData.IsUnavailable and Color3.fromRGB(45, 30, 30) or Color3.fromRGB(30, 30, 45)
+	frame.BorderSizePixel = 0
+	frame.LayoutOrder = index
+	
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = frame
+	
+	local padding = Instance.new("UIPadding")
+	padding.PaddingLeft = UDim.new(0, 10)
+	padding.PaddingRight = UDim.new(0, 10)
+	padding.PaddingTop = UDim.new(0, 8)
+	padding.PaddingBottom = UDim.new(0, 8)
+	padding.Parent = frame
+	
+	local headerFrame = Instance.new("Frame")
+	headerFrame.Size = UDim2.new(1, 0, 0, 25)
+	headerFrame.BackgroundTransparency = 1
+	
+	local icon = Instance.new("TextLabel")
+	icon.Size = UDim2.new(0, 30, 1, 0)
+	icon.BackgroundTransparency = 1
+	icon.Text = soundData.IsUnavailable and "🛡️ #" .. index or "🎵 #" .. index
+	icon.TextColor3 = soundData.IsUnavailable and Color3.fromRGB(255, 150, 150) or Color3.fromRGB(255, 255, 255)
+	icon.TextSize = 12
+	icon.Font = Enum.Font.GothamSemibold
+	icon.TextXAlignment = Enum.TextXAlignment.Left
+	
+	local locationText = Instance.new("TextLabel")
+	locationText.Size = UDim2.new(1, -35, 1, 0)
+	locationText.Position = UDim2.new(0, 35, 0, 0)
+	locationText.BackgroundTransparency = 1
+	locationText.Text = soundData.Location
+	locationText.TextColor3 = Color3.fromRGB(180, 180, 200)
+	locationText.TextSize = 11
+	locationText.Font = Enum.Font.Gotham
+	locationText.TextXAlignment = Enum.TextXAlignment.Right
+	
+	local nameLabel = Instance.new("TextLabel")
+	nameLabel.Size = UDim2.new(1, 0, 0, 20)
+	nameLabel.Position = UDim2.new(0, 0, 0, 25)
+	nameLabel.BackgroundTransparency = 1
+	nameLabel.Text = "🎼 " .. soundData.Name
+	nameLabel.TextColor3 = soundData.IsUnavailable and Color3.fromRGB(255, 180, 180) or Color3.fromRGB(255, 255, 255)
+	nameLabel.TextSize = 12
+	nameLabel.Font = Enum.Font.Gotham
+	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+	
+	local idLabel = Instance.new("TextLabel")
+	idLabel.Size = UDim2.new(1, 0, 0, 20)
+	idLabel.Position = UDim2.new(0, 0, 0, 45)
+	idLabel.BackgroundTransparency = 1
+	idLabel.Text = soundData.IsUnavailable and "🔒 Protected: " .. soundData.AssetId or "🎯 Code: " .. soundData.AssetId
+	idLabel.TextColor3 = soundData.IsUnavailable and Color3.fromRGB(255, 150, 100) or Color3.fromRGB(100, 200, 255)
+	idLabel.TextSize = 12
+	idLabel.Font = Enum.Font.GothamSemibold
+	idLabel.TextXAlignment = Enum.TextXAlignment.Left
+	
+	local infoLabel = Instance.new("TextLabel")
+	infoLabel.Size = UDim2.new(1, 0, 0, 20)
+	infoLabel.Position = UDim2.new(0, 0, 0, 65)
+	infoLabel.BackgroundTransparency = 1
+	infoLabel.Text = string.format("⏰ %s/%s | 🚀 %.1fx", 
+		formatTime(soundData.TimePosition), 
+		formatTime(soundData.TimeLength),
+		soundData.Pitch)
+	infoLabel.TextColor3 = Color3.fromRGB(150, 200, 150)
+	infoLabel.TextSize = 11
+	infoLabel.Font = Enum.Font.Gotham
+	infoLabel.TextXAlignment = Enum.TextXAlignment.Left
+	
+	local volumeLabel = Instance.new("TextLabel")
+	volumeLabel.Size = UDim2.new(1, 0, 0, 15)
+	volumeLabel.Position = UDim2.new(0, 0, 0, 85)
+	volumeLabel.BackgroundTransparency = 1
+	volumeLabel.Text = string.format("🔊 Volume: %.0f%%", soundData.Volume * 100)
+	volumeLabel.TextColor3 = Color3.fromRGB(150, 150, 200)
+	volumeLabel.TextSize = 10
+	volumeLabel.Font = Enum.Font.Gotham
+	volumeLabel.TextXAlignment = Enum.TextXAlignment.Left
+	
+	icon.Parent = headerFrame
+	locationText.Parent = headerFrame
+	headerFrame.Parent = frame
+	nameLabel.Parent = frame
+	idLabel.Parent = frame
+	infoLabel.Parent = frame
+	volumeLabel.Parent = frame
+	
+	local copyBtn = Instance.new("TextButton")
+	copyBtn.Size = UDim2.new(0, 140, 0, 25)
+	copyBtn.Position = UDim2.new(1, -145, 1, -30)
+	copyBtn.BackgroundColor3 = soundData.IsUnavailable and Color3.fromRGB(120, 80, 80) or Color3.fromRGB(60, 120, 200)
+	copyBtn.Text = soundData.IsUnavailable and "🛡️ Info" or "🎯 Copy Code"
+	copyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	copyBtn.TextSize = 11
+	copyBtn.Font = Enum.Font.GothamSemibold
+	
+	local btnCorner = Instance.new("UICorner")
+	btnCorner.CornerRadius = UDim.new(0, 6)
+	btnCorner.Parent = copyBtn
+	
+	copyBtn.MouseButton1Click:Connect(function()
+		createCopyPopup(soundData.AssetId, soundData.Name, soundData.IsUnavailable)
+	end)
+	
+	copyBtn.Parent = frame
+	
+	return frame
+end
+
+local function updateMusicInfo()
+	if isUpdating then return end
+	isUpdating = true
+	
+	statusText.Text = "🔍 Tracking audio signals..."
+	statusText.TextColor3 = Color3.fromRGB(200, 200, 100)
+	
+	for _, child in ipairs(content:GetChildren()) do
+		if child:IsA("Frame") then
+			child:Destroy()
+		end
+	end
+	
+	local playingSounds = {}
+	local foundIds = {}
+	
+	local function checkSound(sound, location)
+		if sound:IsA("Sound") and sound.Playing then
+			local assetId, sourceType, isUnavailable = extractSoundInfo(sound.SoundId)
+			
+			local soundKey = assetId .. "_" .. location
+			if not foundIds[soundKey] then
+				foundIds[soundKey] = true
+				
+				table.insert(playingSounds, {
+					Sound = sound,
+					Name = sound.Name,
+					Location = location,
+					AssetId = assetId,
+					SourceType = sourceType,
+					IsUnavailable = isUnavailable,
+					Volume = sound.Volume,
+					TimePosition = sound.TimePosition,
+					TimeLength = sound.TimeLength,
+					Pitch = sound.Pitch
+				})
+			end
+		end
+	end
+	
+	checkSound(SoundService, "Background Music")
+	
+	for _, sound in ipairs(SoundService:GetDescendants()) do
+		if sound:IsA("Sound") then
+			checkSound(sound, "SoundService: " .. sound.Parent.Name)
+		end
+	end
+	
+	for _, sound in ipairs(workspace:GetDescendants()) do
+		if sound:IsA("Sound") then
+			checkSound(sound, "World: " .. sound.Parent.Name)
+		end
+	end
+	
+	local lighting = game:GetService("Lighting")
+	for _, sound in ipairs(lighting:GetDescendants()) do
+		if sound:IsA("Sound") then
+			checkSound(sound, "Lighting: " .. sound.Parent.Name)
+		end
+	end
+	
+	if #playingSounds == 0 then
+		local noSound = Instance.new("TextLabel")
+		noSound.Size = UDim2.new(1, 0, 0, 80)
+		noSound.BackgroundTransparency = 1
+		noSound.Text = "🎵 Silence...\n\nNext hunt in 10 seconds"
+		noSound.TextColor3 = Color3.fromRGB(150, 150, 150)
+		noSound.TextSize = 14
+		noSound.Font = Enum.Font.Gotham
+		noSound.TextWrapped = true
+		noSound.Parent = content
+		
+		statusText.Text = "🌌 Silence"
+		statusText.TextColor3 = Color3.fromRGB(255, 100, 100)
+	else
+		statusText.Text = "🎯 Tracks found: " .. #playingSounds
+		statusText.TextColor3 = Color3.fromRGB(100, 255, 100)
+		
+		table.sort(playingSounds, function(a, b)
+			if a.IsUnavailable ~= b.IsUnavailable then
+				return not a.IsUnavailable
+			end
+			return a.TimePosition > b.TimePosition
+		end)
+		
+		for i, soundData in ipairs(playingSounds) do
+			local soundElement = createSoundElement(soundData, i)
+			soundElement.Parent = content
+		end
+	end
+	
+	lastUpdate = tick()
+	isUpdating = false
+end
+
+local function checkForUpdate()
+	local currentTime = tick()
+	if currentTime - lastUpdate >= updateInterval then
+		updateMusicInfo()
+	end
+	
+	local timeLeft = math.floor(updateInterval - (currentTime - lastUpdate))
+	if timeLeft > 0 then
+		refreshBtn.Text = string.format("🔄 In %dsec", timeLeft)
+	else
+		refreshBtn.Text = "🎯 Track Now!"
+	end
+end
+
+local dragging = false
+local dragStart = Vector2.new(0, 0)
+local startPos = UDim2.new(0, 0, 0, 0)
+
+header.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = mainFrame.Position
+	end
+end)
+
+header.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = false
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		local delta = input.Position - dragStart
+		mainFrame.Position = UDim2.new(
+			startPos.X.Scale, 
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale, 
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+	screenGui:Destroy()
+end)
+
+refreshBtn.MouseButton1Click:Connect(function()
+	if not isUpdating then
+		updateMusicInfo()
+	end
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	
+	if input.KeyCode == Enum.KeyCode.F3 then
+		mainFrame.Visible = not mainFrame.Visible
+		if mainFrame.Visible then
+			updateMusicInfo()
+		end
+	end
+end)
+
+updateMusicInfo()
+
+spawn(function()
+	while true do
+		checkForUpdate()
+		wait(1)
+	end
+end)
+
+print("🎵 Music Detective is on the hunt! Press F3")
+end})
+Tab:AddButton({ Name =  " 各种spy合在一起 [非常推荐]", Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/InfernusScripts/Ketamine/refs/heads/main/Ketamine.lua"))()
+end})
+
 Tab:AddButton({
 	Name = "Dex",
 	Callback = function()
@@ -1760,40 +4051,6 @@ Tab:AddButton({
     Name = "IY Dex修复版",
     Callback = function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/dex.lua"))()
-    end
-})
-
-Tab:AddButton({
-    Name = "普京比例",
-    Callback = function()
-        getgenv().Resolution = {
-            [".gg/scripters"] = 0.65
-        }
-
-        local Camera = workspace.CurrentCamera
-        if getgenv().gg_scripters == nil then
-            game:GetService("RunService").RenderStepped:Connect(function()
-                Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, getgenv().Resolution[".gg/scripters"], 0, 0, 0, 1)
-            end)
-        end
-        getgenv().gg_scripters = "g5s"
-    end
-})
-
-Tab:AddButton({
-    Name = "恢复比例",
-    Callback = function()
-        getgenv().Resolution = {
-            [".gg/scripters"] = 1
-        }
-
-        local Camera = workspace.CurrentCamera
-        if getgenv().gg_scripters == nil then
-                game:GetService("RunService").RenderStepped:Connect(function()
-                Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, getgenv().Resolution[".gg/scripters"], 0, 0, 0, 1)
-            end)
-        end
-        getgenv().gg_scripters = "g5s"
     end
 })
 local MainTab = Window:MakeTab({
@@ -1890,13 +4147,6 @@ MainTab:AddButton({
     Name = "自瞄辅助",
     Callback = function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/Qrto1/aimbot/main/fov"))()
-    end    
-})
-
-MainTab:AddButton({
-    Name = "飞行V3",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/Qrto1/fly/main/universal", true))()
     end    
 })
 
@@ -4433,13 +6683,6 @@ Tab:AddButton({
 
     end    
 })
-Tab:AddButton({
-    Name = "ESP 脚本 [BY: Q3E4]",
-    Callback = function()
-
-    end    
-})
-
 -- Game ID 5203828273 - Dress to impress
 elseif game.GameId == 5203828273 then
     local Tab = Window:MakeTab({
@@ -6632,6 +8875,84 @@ if game.GameId == 504035427 then
         end    
     })
 end
+local Tab= Window:MakeTab({
+	Name = "其他优质脚本",
+	Icon = "rbxassetid://7743866529",
+	PremiumOnly = false
+})
+Tab:AddButton({ Name =  gradient("XI Pro(Atomic Hub) [Free]", Color3.fromHex("#FF0000"), Color3.fromHex("#FF0000")), Callback = function()
+        OrionLib:MakeNotification({
+        	Name = "Xi Pro免费版已在加载!",
+            Content = "玩得愉快~",
+        	Image = "rbxassetid://4483345998",
+        	Time = 5
+        })
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/123fa98/Xi_Pro/refs/heads/main/Atomic-Script"))()
+end})
+
+Tab:AddButton({ Name =  gradient("XK HUB [OP]", Color3.fromHex("#00FF87"), Color3.fromHex("#60EFFF")), Callback = function()
+        OrionLib:MakeNotification({
+        	Name = "XK HUB已在加载!",
+            Content = "玩得愉快!!!!",
+        	Image = "rbxassetid://4483345998",
+        	Time = 5
+        })
+        loadstring(game:HttpGet(('https://github.com/devslopo/DVES/raw/main/XK%20Hub')))()
+end})
+
+Tab:AddButton({ Name =  gradient("Kanl", Color3.fromHex("#00FF87"), Color3.fromHex("#60EFFF")) .. "破解版", Callback = function()
+        OrionLib:MakeNotification({
+        	Name = "Kanl已在加载!",
+            Content = "玩得愉快!!!!",
+        	Image = "rbxassetid://4483345998",
+        	Time = 5
+        })
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/eksan966/Federal/refs/heads/main/Kanl"))()
+end})
+
+Tab:AddButton({ Name =  gradient("TX HUB", Color3.fromHex("#00FF87"), Color3.fromHex("#60EFFF")), Callback = function()
+        OrionLib:MakeNotification({
+        	Name = "退休脚本已在加载!",
+            Content = "玩得愉快!!!!",
+        	Image = "rbxassetid://4483345998",
+        	Time = 5
+        })
+        TX = "脚本群:160369111"
+        Script = "Free永久免费"
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/JsYb666/TX-Free-YYDS/refs/heads/main/FREE-TX-TEAM"))()
+end})
+
+Tab:AddButton({ Name =  gradient("Pi Script ", Color3.fromHex("#00FF87"), Color3.fromHex("#60EFFF")), Callback = function()
+        OrionLib:MakeNotification({
+        	Name = "皮脚本已在加载!",
+            Content = "玩得愉快!!!!",
+        	Image = "rbxassetid://4483345998",
+        	Time = 5
+        })
+        getgenv().XiaoPi="皮脚本QQ群894995244" loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaopi77/xiaopi77/main/QQ1002100032-Roblox-Pi-script.lua"))()
+end})
+
+Tab:AddButton({ Name =  gradient("BZ-X HUB", Color3.fromHex("#00FF87"), Color3.fromHex("#60EFFF")), Callback = function()
+        OrionLib:MakeNotification({
+        	Name = "北极星脚本已在加载!",
+            Content = "玩得愉快!!!!",
+        	Image = "rbxassetid://4483345998",
+        	Time = 5
+        })
+        BJX_HUB = "北极星加载器"
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/zilinskaslandon/-/refs/heads/main/%E5%8C%97%E6%9E%81%E6%98%9F%E5%8A%A0%E8%BD%BD%E5%99%A8%E5%B7%B2%E5%8A%A0.lua"))()
+end})
+
+Tab:AddButton({ Name =  gradient("Jian Ke", Color3.fromHex("#00FF87"), Color3.fromHex("#60EFFF")), Callback = function()
+        OrionLib:MakeNotification({
+        	Name = "剑客脚本破解版已在加载!",
+            Content = "玩得愉快!!!!",
+        	Image = "rbxassetid://4483345998",
+        	Time = 5
+        })
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/eksan966/Sword_Guest/refs/heads/main/VIP"))()
+end})
+
 local MiscTab = Window:MakeTab({
     Name = "反馈",
     Icon = "rbxassetid://4483345998",
